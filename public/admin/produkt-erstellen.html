@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Produkt erstellen / bearbeiten</title>
+  <link rel="stylesheet" href="/style.css" />
+</head>
+<body>
+
+  <form id="product-form" enctype="multipart/form-data" autocomplete="on">
+    <div class="status-container">
+      <label for="status">Status *</label>
+      <select id="status" name="status" required>
+        <option value="active" selected>Aktiv</option>
+        <option value="inactive">Inaktiv</option>
+      </select>
+    </div>
+
+    <div class="accordion-item">
+      <button type="button" class="accordion-header">Allgemeine Produktdaten</button>
+      <div class="accordion-content">
+        <label for="name">Produktname *</label>
+        <input type="text" id="name" name="name" required maxlength="160" />
+
+        <label for="brand">Marke *</label>
+        <input type="text" id="brand" name="brand" required maxlength="120" />
+
+        <label for="price">Verkaufspreis (€) *</label>
+        <input type="number" id="price" name="price" step="0.01" min="0" required inputmode="decimal" />
+
+        <label for="description">Beschreibung *</label>
+        <textarea id="description" name="description" rows="4" required></textarea>
+
+        <label for="purchasePrice">Einkaufspreis (€)</label>
+        <input type="number" id="purchasePrice" name="purchasePrice" step="0.01" min="0" inputmode="decimal" />
+
+        <label for="image">Produktbild *</label>
+        <!-- name bleibt "imageUrl", falls dein Backend das so erwartet -->
+        <input type="file" id="image" name="imageUrl" accept="image/*" required />
+
+        <label for="category">Kategorie *</label>
+        <input type="text" id="category" name="category" required maxlength="120" />
+
+        <label for="productLine">Produktlinie *</label>
+        <input type="text" id="productLine" name="productLine" required maxlength="120" />
+
+        <label for="seoTitle">SEO-Titel *</label>
+        <input type="text" id="seoTitle" name="seoTitle" maxlength="60" required />
+
+        <label for="seoDescription">SEO-Beschreibung *</label>
+        <textarea id="seoDescription" name="seoDescription" rows="3" maxlength="160" required></textarea>
+      </div>
+    </div>
+
+    <div class="accordion-item">
+      <button type="button" class="accordion-header">Neu</button>
+      <div class="accordion-content">
+        <label for="neu">Neu *</label>
+        <input type="checkbox" id="neu" name="neu" value="true" aria-describedby="neu-hint" />
+        <small id="neu-hint">Aktiviere, wenn es sich um ein neues Produkt handelt.</small>
+      </div>
+    </div>
+
+    <button type="submit" id="submit-btn">Produkt speichern</button>
+  </form>
+
+  <script src="/js/product-create.js"></script>
+</body>
+</html>

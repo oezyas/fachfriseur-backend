@@ -1,0 +1,15 @@
+# Env
+.env
+
+# Dependencies
+node_modules/
+
+# Logs (alles im Ordner ignorieren)
+logs/
+!logs/.gitkeep   
+
+# macOS
+.DS_Store
+
+# TLS-Keys (falls lokal vorhanden)
+localhost*.pem

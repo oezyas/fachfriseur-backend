@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Produkte verwalten</title>
+  <meta name="robots" content="noindex, nofollow" />
+  <link rel="stylesheet" href="/admin-style.css" />
+</head>
+<body>
+  <noscript>
+    <div class="form-container">
+      Bitte JavaScript aktivieren, um den Admin-Bereich zu nutzen.
+    </div>
+  </noscript>
+
+  <div class="admin-layout">
+    <!-- Seitenleiste -->
+    <aside class="sidebar" aria-label="Admin Navigation">
+      <h2>Admin</h2>
+      <nav>
+        <a href="/admin/produkte-verwalten.html">📦 Produkte</a>
+        <a href="/admin/produkt-erstellen.html">➕ Neues Produkt</a>
+        <a href="#">⚙️ Einstellungen</a>
+        <a href="#" id="logoutBtn">🔓 Logout</a>
+      </nav>
+    </aside>
+
+    <!-- Hauptbereich -->
+    <main class="admin-main">
+      <!-- 🔒 Login-Box (JS zeigt, wenn nicht eingeloggt) -->
+      <div id="admin-login-box" class="form-container" style="display:none">
+        <h2>🔐 Admin Login</h2>
+        <form id="admin-login-form" autocomplete="on">
+          <input type="email" id="login-email" placeholder="E-Mail" required autocomplete="username" />
+          <input type="password" id="login-password" placeholder="Passwort" required autocomplete="current-password" />
+          <button type="submit">Anmelden</button>
+          <p class="message" id="login-message" role="status" aria-live="polite"></p>
+        </form>
+      </div>
+
+      <!-- 🛠 Admin-Ansicht (JS zeigt, wenn eingeloggt) -->
+      <div class="admin-container" id="admin-area" style="display:none">
+        <div class="admin-header-row">
+          <h1>Produkte verwalten</h1>
+          <div style="display:flex; align-items:center; gap:10px;">
+            <select id="statusFilter" class="status-filter" style="flex:none;">
+              <option value="active">🟢 Aktiv</option>
+              <option value="inactive">🔴 Inaktiv</option>
+              <option value="all">📋 Alle</option>
+            </select>
+
+            <div class="view-switch" style="flex:none;">
+              <select id="viewSelect" class="view-select">
+                <option value="list">Liste</option>
+                <option value="grid">Karten</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <input
+          type="text"
+          id="searchInput"
+          placeholder="🔍 Suche nach Produktname…"
+          class="search-bar"
+          autocomplete="off"
+        />
+
+        <div id="product-admin-list">🔄 Produkte werden geladen …</div>
+      </div>
+    </main>
+  </div>
+
+  <!-- Skripte -->
+  <script src="/js/product-admin-list.js" defer></script>
+  <script src="/js/admin-login-check.js" defer></script>
+  <script src="/js/logout.js" defer></script>
+</body>
+</html>

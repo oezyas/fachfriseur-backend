@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Startseite – Fachhandelfriseur</title>
+  <link rel="stylesheet" href="/style.css" />
+</head>
+<body>
+  <header>
+    <h1>Fachhandelfriseur</h1>
+    <nav class="header-links">
+      <a href="/login.html" id="loginLink">Anmelden</a>
+      <a href="/register.html" id="registerLink">Kostenlos registrieren</a>
+    </nav>
+  </header>
+
+  <!-- Profilbutton & Menü (auth-ui.js nutzt diese, oder legt sie an wenn nicht vorhanden) -->
+  <div class="profile-button" id="avatarCircle">?</div>
+  <div id="profileMenu">
+    <p id="usernameDisplay">Nutzer</p>
+    <button id="accountSettings">Kontoeinstellungen</button>
+    <button id="logoutBtn">Abmelden</button>
+  </div>
+
+  <main>
+    <h2>Willkommen auf der Startseite</h2>
+    <p>Hier können deine Inhalte erscheinen.</p>
+
+    <!-- Filter-UI wird hier injected -->
+    <div id="filterPlaceholder"></div>
+
+    <!-- Produktliste -->
+    <div id="produkte-galerie"></div>
+
+    <!-- Pagination -->
+    <div id="paginationWrapper">
+      <div id="paginationControls" class="pagination-controls"></div>
+    </div>
+  </main>
+
+  <!-- Scripts -->
+  <script type="module" src="/js/main.js" defer></script>
+  <script src="/js/auth-ui.js" defer></script>
+</body>
+</html>

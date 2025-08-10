@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Registrieren – Fachhandelfriseur</title>
+  <link rel="stylesheet" href="/style.css" />
+</head>
+<body>
+  <div class="form-container">
+    <h2>Konto erstellen</h2>
+
+    <form id="registerForm" autocomplete="on">
+      <input type="text" id="username" name="username" placeholder="Benutzername (optional)" autocomplete="username" />
+
+      <input type="email" id="email" name="email" placeholder="E-Mail-Adresse"
+             required autocomplete="email" inputmode="email" />
+      <input type="email" id="emailRepeat" name="emailRepeat" placeholder="E-Mail-Adresse wiederholen"
+             required autocomplete="email" inputmode="email" />
+
+      <input type="password" id="password" name="password"
+             placeholder="Passwort (min. 12 Zeichen)" required minlength="12"
+             pattern="(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{12,}"
+             title="Mind. 12 Zeichen, Groß-/Kleinbuchstabe, Zahl, Sonderzeichen"
+             autocomplete="new-password" />
+
+      <input type="password" id="passwordConfirm" name="passwordConfirm"
+             placeholder="Passwort bestätigen" required minlength="12"
+             pattern="(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{12,}"
+             title="Mind. 12 Zeichen, Groß-/Kleinbuchstabe, Zahl, Sonderzeichen"
+             autocomplete="new-password" />
+
+      <button type="submit">Registrieren</button>
+    </form>
+
+    <div id="message" class="message" aria-live="polite"></div>
+  </div>
+
+  <script src="/js/register.js" defer></script>
+</body>
+</html>

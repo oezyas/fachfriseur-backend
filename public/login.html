@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Anmeldung – Fachhandelfriseur</title>
+  <link rel="stylesheet" href="/style.css" />
+</head>
+<body>
+  <div class="form-container">
+    <h2>Anmeldung</h2>
+
+    <form id="loginForm" autocomplete="on">
+      <input type="email" id="email" name="email" placeholder="E-Mail-Adresse" required autocomplete="email" />
+      <input type="password" id="password" name="password" placeholder="Passwort" required autocomplete="current-password" />
+      <button type="submit">Anmelden</button>
+    </form>
+
+    <div id="message" class="message" aria-live="polite"></div>
+
+    <div class="link">
+      <a href="/password-reset.html">Passwort vergessen?</a> ·
+      <a href="/register.html">Registrieren</a>
+    </div>
+  </div>
+
+  <script src="/js/login.js" defer></script>
+</body>
+</html>

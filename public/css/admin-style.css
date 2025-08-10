@@ -1,0 +1,172 @@
+/* === Admin Layout === */
+.admin-layout {
+  display: flex;
+  min-height: 100vh;
+}
+
+.admin-container {
+  max-width: 900px;
+  margin: 3rem auto;
+  background: #fff;
+  padding: 2rem;
+  border-radius: 12px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.07);
+}
+
+.admin-container h1 {
+  margin-bottom: 1rem;
+  font-size: 1.8rem;
+  color: #333;
+}
+
+/* === Filter & Suche === */
+.admin-header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-bottom: 1rem;
+}
+
+.status-filter {
+  padding: 0.4rem 0.6rem;
+  font-size: 1rem;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  background-color: #f9f9f9;
+  min-width: 150px;
+}
+
+/* === View Switch Buttons === */
+.view-switch-btn {
+  background-color: transparent;
+  border: 1px solid rgba(0,0,0,0.1);
+  color: #333;
+  font-weight: 600;
+  padding: 6px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.2s, border-color 0.2s;
+  font-size: 0.9rem;
+  min-width: 70px;
+}
+
+.view-switch-btn:hover {
+  background-color: rgba(0,0,0,0.05);
+  border-color: rgba(0,0,0,0.2);
+}
+
+.view-switch-btn:focus {
+  outline: none;
+  border-color: #007bff;
+  box-shadow: 0 0 0 2px rgba(0,123,255,0.25);
+}
+
+.view-switch-btn.active {
+  background-color: #007bff;
+  color: white;
+  border-color: #007bff;
+}
+
+
+.search-bar {
+  width: 100%;
+  padding: 0.6rem;
+  font-size: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.admin-main {
+  flex: 1;
+  padding: 2rem;
+}
+
+.sidebar {
+  width: 200px;
+  background-color: transparent;
+  border-right: 1px solid #e0e0e0;
+  padding: 2rem 1rem;
+  font-family: sans-serif;
+  color: #111;
+}
+
+sidebar h2 {
+  font-size: 1.4rem;
+  margin-bottom: 1.5rem;
+}
+
+.sidebar nav {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.sidebar a {
+  color: #111;
+  text-decoration: none;
+  font-size: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 500;
+}
+
+.sidebar a:hover {
+  background-color: #eee;
+  border-radius: 6px;
+  padding: 0.4rem 0.6rem;
+}
+
+/* Formulare */
+.form-container {
+  background: white;
+  padding: 2rem;
+  border-radius: 1rem;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+  width: 320px;
+}
+
+.message {
+  margin-top: 1rem;
+  font-size: 0.9rem;
+  text-align: center;
+  color: red;
+}
+
+/* === View Switch Buttons === */
+.view-switch-btn {
+  background-color: transparent;
+  border: 1px solid rgba(0,0,0,0.1);
+  color: #333;
+  font-weight: 600;
+  padding: 6px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.2s, border-color 0.2s;
+  font-size: 0.9rem;
+  min-width: 70px;
+}
+
+.view-switch-btn:hover {
+  background-color: rgba(0,0,0,0.05);
+  border-color: rgba(0,0,0,0.2);
+}
+
+.view-switch-btn:focus {
+  outline: none;
+  border-color: #007bff;
+  box-shadow: 0 0 0 2px rgba(0,123,255,0.25);
+}
+
+.view-switch-btn.active {
+  background-color: #007bff;
+  color: white;
+  border-color: #007bff;
+}
+
+.search-bar {
+  width: 100%;
+  padding: 0.6rem;
+  font-size: 1rem;
+  margin-bottom: 1.5rem;
+}
