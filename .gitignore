@@ -1,19 +1,20 @@
-# Secrets
+# Node
+node_modules/
+
+# Env & Certs
 .env
 *.pem
 
-# Dependencies
-node_modules/
-
 # Logs
 logs/
-*.log
 !logs/.gitkeep
 
-# Uploads (Ordner behalten)
+# Uploads (Bilder etc.)
 public/uploads/*
 !public/uploads/.gitkeep
 
-# OS/Editor
+# macOS & Editor
 .DS_Store
-*.swp
+**/.DS_Store
+.vscode/
+.idea/
