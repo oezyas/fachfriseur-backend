@@ -1,15 +1,19 @@
-# Env
+# Secrets
 .env
+*.pem
 
 # Dependencies
 node_modules/
 
-# Logs (alles im Ordner ignorieren)
+# Logs
 logs/
-!logs/.gitkeep   
+*.log
+!logs/.gitkeep
 
-# macOS
+# Uploads (Ordner behalten)
+public/uploads/*
+!public/uploads/.gitkeep
+
+# OS/Editor
 .DS_Store
-
-# TLS-Keys (falls lokal vorhanden)
-localhost*.pem
+*.swp
