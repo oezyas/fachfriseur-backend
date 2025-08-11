@@ -1,20 +1,31 @@
-# Node
+# Dependencies
 node_modules/
 
-# Env & Certs
-.env
+# Environment & certs
+.env*
+!.env.example
 *.pem
 
 # Logs
 logs/
 !logs/.gitkeep
+npm-debug.log*
+yarn-debug.log*
+pnpm-debug.log*
 
-# Uploads (Bilder etc.)
+# Uploads (user-generated)
 public/uploads/*
 !public/uploads/.gitkeep
 
-# macOS & Editor
+# OS & Editor
 .DS_Store
 **/.DS_Store
 .vscode/
 .idea/
+*.swp
+*~
+.history/
+
+# (optional, falls später Build-Outputs entstehen)
+dist/
+build/

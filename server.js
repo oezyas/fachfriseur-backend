@@ -19,18 +19,27 @@ process.on("unhandledRejection", (e) => logger.error("UNHANDLED:", e));
 process.on("uncaughtException", (e) => logger.error("UNCAUGHT:", e));
 
 const app = express();
+const isProd = process.env.NODE_ENV === "production";
 
-// optional, falls Proxy/Container davor
+// Proxy/Hardening
 app.set("trust proxy", 1);
-app.disable("x-powered-by"); // kleine Hardening-Maßnahme
+app.disable("x-powered-by");
 
 // --- Core Middleware ---
 app.use(cookieParser());
-app.use(morgan("dev"));
+if (!isProd) app.use(morgan("dev"));
 app.use(express.json({ limit: "100kb" }));
 app.use(express.urlencoded({ extended: true, limit: "100kb" }));
 
-// Helmet + CSP
+// Helmet + CSP (connect-src dynamisch)
+const connectSrc = ["'self'"];
+if (process.env.FRONTEND_ORIGIN) {
+  connectSrc.push(
+    ...process.env.FRONTEND_ORIGIN.split(",")
+      .map((s) => s.trim())
+      .filter(Boolean)
+  );
+}
 app.use(helmet());
 app.use(
   helmet.contentSecurityPolicy({
@@ -40,7 +49,7 @@ app.use(
       "script-src": ["'self'"],
       "style-src": ["'self'", "'unsafe-inline'"],
       "img-src": ["'self'", "data:"],
-      "connect-src": ["'self'"],
+      "connect-src": connectSrc,
       "frame-ancestors": ["'none'"],
       "base-uri": ["'self'"],
       "form-action": ["'self'"],
@@ -55,13 +64,7 @@ if (FRONTEND_ORIGIN) {
   app.use(cors({ origin: origins, credentials: true }));
 }
 
-// Alte URLs dauerhaft umleiten (kann später raus)
-app.get("/product-add.html", (_, res) =>
-  res.redirect(301, "/admin/produkt-erstellen.html")
-);
-app.get("/reset-confirm.html", (_, res) =>
-  res.redirect(301, "/password-reset-confirm.html")
-);
+// Alte URLs dauerhaft umleiten (später entfernbar)
 
 // --- Static Assets ---
 app.use(express.static(path.join(__dirname, "public")));
@@ -78,7 +81,6 @@ if (!mongoUri) {
   logger.error("Fehler: MONGO_URI ist nicht gesetzt in .env!");
   process.exit(1);
 }
-
 mongoose
   .connect(mongoUri)
   .then(() => logger.info("MongoDB connected"))
@@ -106,7 +108,7 @@ app.use((req, res) => {
   res.status(404).json({ errors: [{ msg: "Route nicht gefunden" }] });
 });
 
-// Zentraler Error-Handler (als LETZTE Middleware)
+// Zentraler Error-Handler (letzte Middleware)
 app.use(errorHandler);
 
 // --- Server (HTTPS mit Fallback auf HTTP) ---
