@@ -102,6 +102,9 @@ app.use("/api/produkte", productRoutes);
 app.use("/api/protected", protectedRoutes);
 app.use("/api/password-reset", passwordResetRoutes);
 
+// ✅ Healthcheck
+app.get('/health', (req, res) => res.send('ok'));
+
 // 404
 app.use((req, res) => {
   logger.warn(`404 ${req.method} ${req.originalUrl}`);
