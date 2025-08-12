@@ -10,3 +10,4 @@ Node.js/Express + MongoDB. Enthält Auth (JWT + Cookies), Produkt-CRUD (mit Uplo
 npm i
 cp .env.example .env
 npm run dev
+```
