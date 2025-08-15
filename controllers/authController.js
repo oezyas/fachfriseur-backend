@@ -10,6 +10,13 @@ const sendEmail = require("../utils/sendEmail");
 const SECRET = process.env.JWT_SECRET || "dein_geheimer_schluessel";
 const FRONTEND_BASE_URL = process.env.FRONTEND_BASE_URL || "https://localhost:3443";
 
+// Hilfsfunktion: Basis-URL aus Request ableiten
+const getBaseUrl = (req) => {
+  const proto = (req.headers["x-forwarded-proto"] || req.protocol || "https").split(",")[0];
+  const host = req.get("host");
+  return `${proto}://${host}`;
+};
+
 // Helfer: E-Mail maskieren (PII-sparsam loggen)
 const mask = (e) => String(e || "").replace(/(.{3}).+(@.+)/, "$1***$2");
 
@@ -17,7 +24,6 @@ const mask = (e) => String(e || "").replace(/(.{3}).+(@.+)/, "$1***$2");
 exports.register = async (req, res) => {
   res.setHeader("Content-Type", "application/json; charset=utf-8");
 
-  // Falls die Route ausnahmsweise ohne validate() aufgerufen wurde:
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
     logger.warn("❌ Ungültige Registrierungsdaten", errors.array());
@@ -69,14 +75,12 @@ exports.login = async (req, res) => {
       return res.status(401).json({ errors: [{ msg: "E-Mail nicht gefunden." }] });
     }
 
-    // Lock abgelaufen? Zurücksetzen
     if (user.lockUntil && user.lockUntil < Date.now()) {
       user.lockUntil = undefined;
       user.failedLoginAttempts = 0;
       await user.save();
     }
 
-    // Noch gesperrt?
     if (user.lockUntil && user.lockUntil > Date.now()) {
       logger.warn(`⏳ Account gesperrt: ${mask(email)} bis ${user.lockUntil.toISOString()}`);
       return res
@@ -98,7 +102,6 @@ exports.login = async (req, res) => {
       return res.status(401).json({ errors: [{ msg: "Falsches Passwort." }] });
     }
 
-    // Login erfolgreich
     user.failedLoginAttempts = 0;
     user.lockUntil = undefined;
     await user.save();
@@ -106,12 +109,11 @@ exports.login = async (req, res) => {
     logger.info(`✅ Benutzer eingeloggt: ${mask(email)}`);
 
     const redirectUrl = user.role === "admin" ? "/admin/produkte-verwalten.html" : "/";
-
     const token = jwt.sign({ id: user._id, role: user.role }, SECRET, { expiresIn: "1h" });
 
     res.cookie("token", token, {
       httpOnly: true,
-      secure: true,          // HTTPS erwartet (in DEV ggf. self-signed)
+      secure: true,
       sameSite: "strict",
       path: "/",
     });
@@ -123,7 +125,7 @@ exports.login = async (req, res) => {
   }
 };
 
-// Logout (ohne DB-Lookup)
+// Logout
 exports.logout = (req, res) => {
   res.setHeader("Content-Type", "application/json; charset=utf-8");
 
@@ -140,7 +142,7 @@ exports.logout = (req, res) => {
   res.status(200).json({ message: "Logout erfolgreich." });
 };
 
-// Passwort-Reset: Request (E-Mail mit Link schicken)
+// Passwort-Reset: Request
 exports.passwordResetRequest = async (req, res, next) => {
   try {
     logger.info("🚀 Passwort-Reset-Request aufgerufen");
@@ -154,24 +156,20 @@ exports.passwordResetRequest = async (req, res, next) => {
     const email = (req.body.email || "").toLowerCase().trim();
     const user = await User.findOne({ email });
 
-    // Generische Antwort (Enumeration vermeiden)
     if (!user) {
       logger.warn(`🔎 Passwort-Reset: E-Mail nicht gefunden (generische Antwort gesendet) – ${mask(email)}`);
       return res.status(200).json({ msg: "Falls die E-Mail existiert, wurde ein Link versendet." });
     }
 
-    // Raw Token erzeugen (nur per Mail)
     const rawToken = crypto.randomBytes(32).toString("hex");
-
-    // Nur Hash + Ablauf im User speichern
-    user.setResetToken(rawToken, 20); // 20 Minuten gültig
+    user.setResetToken(rawToken, 20);
     await user.save();
 
     logger.info(`🔐 Passwort-Reset-Token erstellt (Hash gespeichert) für ${mask(email)}`);
 
-    const resetLink = `${FRONTEND_BASE_URL}/password-reset-confirm.html?token=${rawToken}&email=${encodeURIComponent(
-      email
-    )}`;
+    // Neuer Code: dynamische Base-URL
+    const baseUrl = (process.env.FRONTEND_BASE_URL || "").trim() || getBaseUrl(req);
+    const resetLink = `${baseUrl}/password-reset-confirm.html?token=${rawToken}`;
 
     const html = `
       <h2>Passwort zurücksetzen</h2>
@@ -186,7 +184,6 @@ exports.passwordResetRequest = async (req, res, next) => {
 
     await sendEmail({ to: email, subject: "Passwort zurücksetzen – Fachfriseur", html });
 
-    // Immer generisch antworten
     return res.status(200).json({ msg: "Falls die E-Mail existiert, wurde ein Link versendet." });
   } catch (err) {
     logger.error("❌ Fehler beim Passwort-Reset-Request:", err);
@@ -194,13 +191,12 @@ exports.passwordResetRequest = async (req, res, next) => {
   }
 };
 
-// Passwort-Reset: Bestätigung (neues Passwort setzen)
+// Passwort-Reset: Bestätigung
 exports.passwordResetConfirm = async (req, res) => {
   res.setHeader("Content-Type", "application/json; charset=utf-8");
   const { token, newPassword } = req.body;
 
   try {
-    // Falls Route ohne validate() aufgerufen wurde
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
       return res.status(400).json({ errors: errors.array() });
