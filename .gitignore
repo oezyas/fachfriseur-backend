@@ -29,3 +29,4 @@ public/uploads/*
 # (optional, falls später Build-Outputs entstehen)
 dist/
 build/
+.aider*
