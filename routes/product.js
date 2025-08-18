@@ -34,7 +34,7 @@ router.get(
 router.post(
   "/",
   authenticateToken,
-  requireRole("admin"), // ✨ ersetzt authorizeAdmin
+  requireRole("admin"), 
   productLimiter,
   upload.single("imageUrl"),
   productValidation,
@@ -46,7 +46,7 @@ router.post(
 router.put(
   "/:id",
   authenticateToken,
-  requireRole("admin"), // ✨ ersetzt authorizeAdmin
+  requireRole("admin"), 
   productLimiter,
   [param("id").isMongoId().withMessage("Ungültige Produkt-ID")],
   validate,
@@ -60,7 +60,7 @@ router.put(
 router.delete(
   "/:id",
   authenticateToken,
-  requireRole("admin"), // ✨ ersetzt authorizeAdmin
+  requireRole("admin"), 
   productLimiter,
   [param("id").isMongoId().withMessage("Ungültige Produkt-ID")],
   validate,

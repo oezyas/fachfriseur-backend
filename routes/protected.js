@@ -2,8 +2,7 @@ const express = require("express");
 const router = express.Router();
 const User = require("../models/User");
 const logger = require("../logger");
-const { authenticateToken } = require("../middleware/auth");
-const { authorizeAdmin } = require("../middleware/authorizeAdmin");
+const { authenticateToken, requireRole } = require("../middleware/auth");
 const conditionalRateLimiter = require("../middleware/conditionalRateLimiter");
 
 // Alle geschützten Routen: erst Auth, dann rollenbasierter Rate-Limiter
@@ -28,7 +27,7 @@ router.get("/", async (req, res) => {
 });
 
 // GET /api/protected/admin-check – nur Admin
-router.get("/admin-check", authorizeAdmin, (req, res) => {
+router.get("/admin-check", requireRole("admin"), (req, res) => {
   return res.status(200).json({
     message: "Admin bestätigt",
     user: { id: req.user.id, role: req.user.role },
