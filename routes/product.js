@@ -4,8 +4,7 @@ const router = express.Router();
 const { query, param } = require("express-validator");
 
 const { optionalAuth } = require("../middleware/optionalAuth");
-const { authenticateToken } = require("../middleware/auth");
-const { authorizeAdmin } = require("../middleware/authorizeAdmin");
+const { authenticateToken, requireRole } = require("../middleware/auth"); // ✨ requireRole hier importiert
 const { productLimiter } = require("../middleware/rateLimiters");
 
 const productValidation = require("../middleware/productValidation");
@@ -35,7 +34,7 @@ router.get(
 router.post(
   "/",
   authenticateToken,
-  authorizeAdmin,
+  requireRole("admin"), // ✨ ersetzt authorizeAdmin
   productLimiter,
   upload.single("imageUrl"),
   productValidation,
@@ -47,7 +46,7 @@ router.post(
 router.put(
   "/:id",
   authenticateToken,
-  authorizeAdmin,
+  requireRole("admin"), // ✨ ersetzt authorizeAdmin
   productLimiter,
   [param("id").isMongoId().withMessage("Ungültige Produkt-ID")],
   validate,
@@ -61,7 +60,7 @@ router.put(
 router.delete(
   "/:id",
   authenticateToken,
-  authorizeAdmin,
+  requireRole("admin"), // ✨ ersetzt authorizeAdmin
   productLimiter,
   [param("id").isMongoId().withMessage("Ungültige Produkt-ID")],
   validate,

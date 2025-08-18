@@ -1,6 +1,10 @@
 // public/js/index.js
+import { secureFetch } from "./utils/secureFetch.js";
+import { withTimeout } from "./utils/withTimeout.js";
+
 document.addEventListener("DOMContentLoaded", () => {
-console.log("Test erfolgreich");
+  console.log("Test erfolgreich");
+
   const categoryFilter = document.getElementById("categoryFilter");
   const productLineFilter = document.getElementById("productLineFilter");
   const brandFilter = document.getElementById("brandFilter");
@@ -14,12 +18,6 @@ console.log("Test erfolgreich");
   let totalPages = 1;
   const limit = 20;
 
-  const withTimeout = (ms = 10000) => {
-    const ctrl = new AbortController();
-    const t = setTimeout(() => ctrl.abort(), ms);
-    return { signal: ctrl.signal, done: () => clearTimeout(t) };
-  };
-
   function getFilters() {
     return {
       category: categoryFilter?.value || "",
@@ -30,15 +28,21 @@ console.log("Test erfolgreich");
   }
 
   async function ladeProdukte(filters = getFilters()) {
-    const t = withTimeout();
+    let t;
     try {
+      t = withTimeout(12000);
+
       const params = new URLSearchParams({ limit, page: currentPage });
       if (filters.category) params.set("category", filters.category);
       if (filters.productLine) params.set("productLine", filters.productLine);
       if (filters.brand) params.set("brand", filters.brand);
       if (filters.sortBy) params.set("sortBy", filters.sortBy);
 
-      const res = await fetch(`/api/produkte?${params.toString()}`, { signal: t.signal });
+      const res = await secureFetch(`/api/produkte?${params.toString()}`, {
+        method: "GET",
+        signal: t.signal,
+      });
+
       if (!res.ok) throw new Error("Fehler beim Laden der Produkte");
 
       const data = await res.json();
@@ -73,11 +77,11 @@ console.log("Test erfolgreich");
       totalPages = Math.ceil(totalCount / limit);
       renderPagination(currentPage, totalPages, filters);
     } catch (err) {
-      console.error(err);
+      console.error("❌", err);
       container.innerHTML = "<p>❌ Produkte konnten nicht geladen werden.</p>";
       if (paginationControls) paginationControls.innerHTML = "";
     } finally {
-      t.done();
+      if (t) t.done();
     }
   }
 
@@ -138,18 +142,17 @@ console.log("Test erfolgreich");
     paginationControls.appendChild(next);
   }
 
-  // Reagiere auf Filteränderungen (aus filterBlock.js)
+  // Filter-Events
   document.addEventListener("filters:change", (e) => {
     currentPage = 1;
     ladeProdukte(e.detail || getFilters());
   });
 
-  // Falls irgendwo noch 'filter-ready' gefeuert wird: unterstützen
   document.addEventListener("filter-ready", () => {
     currentPage = 1;
     ladeProdukte(getFilters());
   });
 
-  // Initial laden
+  // Initial
   ladeProdukte(getFilters());
 });

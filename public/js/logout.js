@@ -1,31 +1,35 @@
 // public/js/logout.js
+import { secureFetch } from "./utils/secureFetch.js";
+import { withTimeout } from "./utils/withTimeout.js";
+
 document.addEventListener("DOMContentLoaded", () => {
   const btn = document.getElementById("logoutBtn");
   if (!btn) return;
 
-  const withTimeout = (ms = 8000) => {
-    const ctrl = new AbortController();
-    const t = setTimeout(() => ctrl.abort(), ms);
-    return { signal: ctrl.signal, done: () => clearTimeout(t) };
-  };
-
   btn.addEventListener("click", async (e) => {
     e.preventDefault();
     if (btn.disabled) return;
-    btn.disabled = true;
 
-    const t = withTimeout();
+    const originalText = btn.textContent;
+    btn.disabled = true;
+    btn.textContent = "Abmelden…";
+
+    let t;
     try {
-      await fetch("/api/auth/logout", {
+      t = withTimeout(8000);
+
+      await secureFetch("/api/auth/logout", {
         method: "POST",
-        credentials: "include",
         signal: t.signal,
       });
     } catch (err) {
-      console.error("Logout-Fehler:", err);
+      console.error("❌ Logout-Fehler:", err);
+      btn.disabled = false;
+      btn.textContent = originalText;
+      return;
     } finally {
-      t.done();
-      localStorage.clear();       // nur UI-Zustand – httpOnly-Cookie löscht der Server
+      if (t) t.done();
+      localStorage.clear();
       window.location.href = "/login.html";
     }
   });

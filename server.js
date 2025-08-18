@@ -31,11 +31,30 @@ if (!isProd) app.use(morgan("dev"));
 app.use(express.json({ limit: "100kb" }));
 app.use(express.urlencoded({ extended: true, limit: "100kb" }));
 
+const csrf = require("csurf");
+const needsCrossSite = Boolean(process.env.FRONTEND_ORIGIN); 
+const sameSite = needsCrossSite ? "none" : "lax";
+const cookieIsSecure = isProd || sameSite === "none"; 
+
+const csrfProtection = csrf({ cookie: true });
+app.use((req, res, next) => {
+  if (["GET", "HEAD", "OPTIONS"].includes(req.method)) return next();
+  csrfProtection(req, res, next);
+});
+
+
+// CSRF-Token an den Client geben (und ein lesbares Hilfs-Cookie setzen)
+app.get("/api/csrf-token", (req, res) => {
+  const token = req.csrfToken();
+  res.json({ csrfToken: token });
+});
+
 // Helmet + CSP (connect-src dynamisch)
 const connectSrc = ["'self'"];
 if (process.env.FRONTEND_ORIGIN) {
   connectSrc.push(
-    ...process.env.FRONTEND_ORIGIN.split(",")
+    ...process.env.FRONTEND_ORIGIN
+      .split(",")
       .map((s) => s.trim())
       .filter(Boolean)
   );
@@ -63,8 +82,6 @@ if (FRONTEND_ORIGIN) {
   const origins = FRONTEND_ORIGIN.split(",").map((s) => s.trim());
   app.use(cors({ origin: origins, credentials: true }));
 }
-
-// Alte URLs dauerhaft umleiten (später entfernbar)
 
 // --- Static Assets ---
 app.use(express.static(path.join(__dirname, "public")));
@@ -103,7 +120,7 @@ app.use("/api/protected", protectedRoutes);
 app.use("/api/password-reset", passwordResetRoutes);
 
 // ✅ Healthcheck
-app.get('/health', (req, res) => res.send('ok'));
+app.get("/health", (req, res) => res.send("ok"));
 
 // 404
 app.use((req, res) => {

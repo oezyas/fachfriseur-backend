@@ -1,4 +1,6 @@
 // public/js/product-detail.js
+import { withTimeout } from "./utils/withTimeout.js";
+import { secureFetch } from "./utils/secureFetch.js";
 import { renderProductDetail } from "./renderProductDetail.js";
 
 document.addEventListener("DOMContentLoaded", async () => {
@@ -12,20 +14,17 @@ document.addEventListener("DOMContentLoaded", async () => {
     return;
   }
 
-  const withTimeout = (ms = 10000) => {
-    const ctrl = new AbortController();
-    const t = setTimeout(() => ctrl.abort(), ms);
-    return { signal: ctrl.signal, done: () => clearTimeout(t) };
-  };
-
+  let t;
   try {
-    const t = withTimeout();
-    const res = await fetch(`/api/produkte?slug=${encodeURIComponent(slug)}`, { signal: t.signal });
-    t.done();
+    t = withTimeout(12000);
+    const res = await secureFetch(`/api/produkte?slug=${encodeURIComponent(slug)}`, {
+      method: "GET",
+      credentials: "include",
+      signal: t.signal,
+    });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
 
     const payload = await res.json().catch(() => ({}));
-    // Erlaube mehrere Antwortformen: [product] | {product} | {products:[...]} | product
     const product =
       (Array.isArray(payload) && payload[0]) ||
       payload.product ||
@@ -37,10 +36,10 @@ document.addEventListener("DOMContentLoaded", async () => {
       return;
     }
 
-    // Render
+    // Render Detail-Komponente
     renderProductDetail(product, container);
 
-    // SEO: Title + Description setzen (Description erzeugen, falls Tag fehlt)
+    // SEO optimieren
     document.title = product.seoTitle || product.name || "Produkt";
     const descText = product.seoDescription || String(product.description || "").slice(0, 160);
     let metaDesc = document.querySelector('meta[name="description"]');
@@ -52,6 +51,8 @@ document.addEventListener("DOMContentLoaded", async () => {
     metaDesc.setAttribute("content", descText);
   } catch (err) {
     console.error("❌ Fehler beim Laden:", err);
-    container.innerHTML = "<p>❌ Fehler beim Laden des Produkts.</p>";
+    container.innerHTML = `<p>❌ Fehler beim Laden des Produkts (${err.message}).</p>`;
+  } finally {
+    if (t) t.done();
   }
 });

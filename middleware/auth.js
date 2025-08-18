@@ -23,12 +23,30 @@ function authenticateToken(req, res, next) {
 
   try {
     const payload = jwt.verify(token, SECRET);
-    // nur minimal nötige Infos weiterreichen
-    req.user = { id: payload.id, role: payload.role, email: payload.email };
+
+    // ✨ Änderung: Email entfernt, da sie nicht im Token enthalten ist
+    req.user = { 
+      id: payload.id, 
+      role: payload.role 
+    };
+
     return next();
   } catch (err) {
     return res.status(403).json({ errors: [{ msg: "Zugriff verweigert." }] });
   }
 }
 
-module.exports = { authenticateToken };
+// Neue Middleware: Rollenprüfung
+function requireRole(role) {
+  return (req, res, next) => {
+    if (!req.user) {
+      return res.status(401).json({ errors: [{ msg: "Nicht eingeloggt." }] });
+    }
+    if (req.user.role !== role) {
+      return res.status(403).json({ errors: [{ msg: "Keine Berechtigung." }] });
+    }
+    next();
+  };
+}
+
+module.exports = { authenticateToken, requireRole };

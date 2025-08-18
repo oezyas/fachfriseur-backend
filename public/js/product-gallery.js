@@ -1,4 +1,7 @@
 // public/js/product-gallery.js
+import { secureFetch } from "./utils/secureFetch.js";
+import { withTimeout } from "./utils/withTimeout.js";
+
 document.addEventListener("DOMContentLoaded", async () => {
   const gallery = document.getElementById("produkte-galerie");
   const categoryFilter = document.getElementById("categoryFilter");
@@ -11,17 +14,13 @@ document.addEventListener("DOMContentLoaded", async () => {
   let allProducts = [];
 
   const esc = (s) =>
-    String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[c]));
+    String(s ?? "").replace(/[&<>"']/g, (c) => (
+      { "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[c]
+    ));
 
   const fmtPrice = (v) => {
     const n = Number(v);
     return Number.isFinite(n) ? `${n.toFixed(2)} €` : "";
-  };
-
-  const withTimeout = (ms = 12000) => {
-    const ctrl = new AbortController();
-    const t = setTimeout(() => ctrl.abort(), ms);
-    return { signal: ctrl.signal, done: () => clearTimeout(t) };
   };
 
   function renderGallery(products) {
@@ -33,7 +32,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     const frag = document.createDocumentFragment();
     products.forEach((p) => {
-      if (p.status !== "active") return; // nur aktive anzeigen
+      if (p.status !== "active") return; 
 
       const card = document.createElement("div");
       card.className = "produkt-karte";
@@ -81,7 +80,6 @@ document.addEventListener("DOMContentLoaded", async () => {
         filtered.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
         break;
       default:
-        // keine Sortierung
         break;
     }
 
@@ -103,36 +101,36 @@ document.addEventListener("DOMContentLoaded", async () => {
     });
   }
 
+  // --- Produkte laden ---
+  let t;
   try {
     gallery.innerHTML = "🔄 Produkte werden geladen…";
-    const t = withTimeout();
-    const res = await fetch("/api/produkte", { signal: t.signal });
-    t.done();
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    const payload = await res.json();
+    t = withTimeout(12000);
 
-    // Akzeptiere Array oder { products: [...] }
+    const res = await secureFetch("/api/produkte", { signal: t.signal });
+    const payload = await res.json().catch(() => ({}));
+
     allProducts = Array.isArray(payload) ? payload : (payload.products || []);
     if (!Array.isArray(allProducts)) allProducts = [];
 
-    // Filter-Optionen füllen
     fillSelect(categoryFilter, allProducts.map((p) => p.category), "Alle Kategorien");
     fillSelect(productLineFilter, allProducts.map((p) => p.productLine), "Alle Produktlinien");
     fillSelect(brandFilter, allProducts.map((p) => p.brand), "Alle Marken");
 
     applyFiltersAndSort();
   } catch (err) {
-    console.error("Fehler beim Laden der Produkte:", err);
+    console.error("❌ Fehler beim Laden der Produkte:", err);
     gallery.innerHTML = "<p>❌ Produkte konnten nicht geladen werden.</p>";
+  } finally {
+    if (t) t.done();
   }
 
-  // Events
+  // --- Filter Events ---
   categoryFilter?.addEventListener("change", applyFiltersAndSort);
   productLineFilter?.addEventListener("change", applyFiltersAndSort);
   brandFilter?.addEventListener("change", applyFiltersAndSort);
   sortBy?.addEventListener("change", applyFiltersAndSort);
 
-  // (Optional) auf globalen Filter-Event reagieren, falls du filterBlock.js nutzt:
   document.addEventListener("filters:change", (e) => {
     const f = e.detail || {};
     if (categoryFilter) categoryFilter.value = f.category || "";

@@ -1,7 +1,11 @@
 // public/js/login.js
+import { secureFetch } from "./utils/secureFetch.js";
+import { withTimeout } from "./utils/withTimeout.js";
+
 document.addEventListener("DOMContentLoaded", () => {
   const form = document.getElementById("loginForm");
   if (!form) return console.error("loginForm nicht gefunden.");
+
   const emailEl = document.getElementById("email");
   const passwordEl = document.getElementById("password");
   const message = document.getElementById("message");
@@ -13,12 +17,6 @@ document.addEventListener("DOMContentLoaded", () => {
     message.style.color = color;
   };
 
-  const withTimeout = (ms = 10000) => {
-    const ctrl = new AbortController();
-    const t = setTimeout(() => ctrl.abort(), ms);
-    return { signal: ctrl.signal, done: () => clearTimeout(t) };
-  };
-
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
 
@@ -26,43 +24,44 @@ document.addEventListener("DOMContentLoaded", () => {
     const password = passwordEl?.value || "";
 
     if (!email || !password) {
-      showMsg("Bitte E-Mail und Passwort eingeben.", "red");
+      showMsg("❌ Bitte E-Mail und Passwort eingeben.", "red");
       return;
     }
 
+    let t;
     try {
       submitBtn && (submitBtn.disabled = true);
-      showMsg("Anmeldung läuft…");
+      showMsg("🔑 Anmeldung läuft…");
 
-      const t = withTimeout(10000);
-      const res = await fetch("/api/auth/login", {
+      t = withTimeout(10000);
+      const res = await secureFetch("/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        credentials: "include", // wichtig für httpOnly-Cookie
         signal: t.signal,
         body: JSON.stringify({ email, password }),
       });
+
       const data = await res.json().catch(() => ({}));
-      t.done();
 
       if (res.ok) {
-        showMsg("Login erfolgreich! Weiterleitung…", "green");
-        // Nichts Sensibles in localStorage speichern – wir verlassen uns auf das Cookie
+        showMsg("✅ Login erfolgreich! Weiterleitung…", "green");
         setTimeout(() => {
           window.location.href = data.redirectUrl || "/index.html";
         }, 800);
       } else if (res.status === 423) {
-        showMsg(data?.errors?.[0]?.msg || "Account vorübergehend gesperrt.", "red");
+        showMsg(data?.errors?.[0]?.msg || "❌ Account vorübergehend gesperrt.", "red");
       } else if (res.status === 401) {
-        showMsg(data?.errors?.[0]?.msg || "E-Mail oder Passwort falsch.", "red");
+        showMsg(data?.errors?.[0]?.msg || "❌ E-Mail oder Passwort falsch.", "red");
       } else {
-        showMsg(data?.errors?.[0]?.msg || "Login fehlgeschlagen.", "red");
+        showMsg(data?.errors?.[0]?.msg || "❌ Login fehlgeschlagen.", "red");
       }
     } catch (err) {
-      console.error("Login-Fehler:", err);
+      console.error("❌ Login-Fehler:", err);
       showMsg("❌ Netzwerk-/Serverfehler oder Timeout.", "red");
     } finally {
+      if (t) t.done();
       submitBtn && (submitBtn.disabled = false);
     }
   });
 });
+

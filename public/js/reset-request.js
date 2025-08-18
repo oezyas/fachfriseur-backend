@@ -1,4 +1,7 @@
 // public/js/reset-request.js
+import { secureFetch } from "./utils/secureFetch.js";
+import { withTimeout } from "./utils/withTimeout.js";
+
 document.addEventListener("DOMContentLoaded", () => {
   const form = document.getElementById("resetRequestForm");
   const messageDiv = document.getElementById("message");
@@ -12,12 +15,6 @@ document.addEventListener("DOMContentLoaded", () => {
     messageDiv.style.color = color;
   };
 
-  const withTimeout = (ms = 10000) => {
-    const ctrl = new AbortController();
-    const t = setTimeout(() => ctrl.abort(), ms);
-    return { signal: ctrl.signal, done: () => clearTimeout(t) };
-  };
-
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
     const email = (emailEl?.value || "").trim().toLowerCase();
@@ -27,33 +24,33 @@ document.addEventListener("DOMContentLoaded", () => {
       return;
     }
 
+    let t;
     try {
       submitBtn && (submitBtn.disabled = true);
       show("Sende Anfrage…");
 
-      const t = withTimeout();
-      const res = await fetch("/api/password-reset/request", {
+      t = withTimeout(10000);
+
+      const res = await secureFetch("/api/password-reset/request", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        credentials: "include",
         signal: t.signal,
         body: JSON.stringify({ email }),
       });
+
       const data = await res.json().catch(() => ({}));
-      t.done();
 
       if (res.ok) {
-        // immer generische Antwort (keine Enumeration)
         show("📧 Falls registriert, wurde eine E-Mail gesendet.", "green");
-        // optional: nach kurzer Pause zurück zum Login
         setTimeout(() => (window.location.href = "login.html"), 1500);
       } else {
         show(data?.errors?.[0]?.msg || "❌ Fehler bei der Anfrage.", "red");
       }
     } catch (err) {
-      console.error(err);
+      console.error("❌ Fehler beim Passwort-Reset-Request:", err);
       show("❌ Netzwerk-/Serverfehler oder Timeout.", "red");
     } finally {
+      if (t) t.done();
       submitBtn && (submitBtn.disabled = false);
     }
   });

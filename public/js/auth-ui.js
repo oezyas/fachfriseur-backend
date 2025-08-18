@@ -1,4 +1,6 @@
-// public/js/auth-ui.js
+import { secureFetch } from "./utils/secureFetch.js";
+import { withTimeout } from "./utils/withTimeout.js";
+
 (() => {
   if (window.__authUiInitialized) return;
   window.__authUiInitialized = true;
@@ -27,21 +29,28 @@
       profileMenu.setAttribute("role", "menu");
       profileMenu.setAttribute("aria-hidden", "true");
       profileMenu.style.display = "none";
-      profileMenu.innerHTML = `
-        <p id="usernameDisplay">Nutzer</p>
-        <button id="accountSettings" role="menuitem" type="button">Kontoeinstellungen</button>
-        <button id="logoutBtn" role="menuitem" type="button">Abmelden</button>
-      `;
+
+      const usernameDisplay = document.createElement("p");
+      usernameDisplay.id = "usernameDisplay";
+      usernameDisplay.textContent = "Nutzer";
+
+      const accountSettings = document.createElement("button");
+      accountSettings.id = "accountSettings";
+      accountSettings.type = "button";
+      accountSettings.setAttribute("role", "menuitem");
+      accountSettings.textContent = "Kontoeinstellungen";
+
+      const logoutBtn = document.createElement("button");
+      logoutBtn.id = "logoutBtn";
+      logoutBtn.type = "button";
+      logoutBtn.setAttribute("role", "menuitem");
+      logoutBtn.textContent = "Abmelden";
+
+      profileMenu.append(usernameDisplay, accountSettings, logoutBtn);
       document.body.appendChild(profileMenu);
     }
 
     const usernameDisplay = document.getElementById("usernameDisplay");
-
-    const withTimeout = (ms = 8000) => {
-      const ctrl = new AbortController();
-      const t = setTimeout(() => ctrl.abort(), ms);
-      return { signal: ctrl.signal, done: () => clearTimeout(t) };
-    };
 
     const showLoggedOutUI = () => {
       if (loginLink) loginLink.style.display = "inline";
@@ -60,21 +69,22 @@
       avatarCircle.textContent = (email?.charAt(0) || "?").toUpperCase();
     };
 
-    // Admin/Protected Check
+    let t;
     try {
-      const t = withTimeout(8000);
-      const res = await fetch("/api/protected", { credentials: "include", signal: t.signal });
-      t.done();
+      t = withTimeout(8000);
+      const res = await secureFetch("/api/protected", { signal: t.signal });
       if (!res.ok) return showLoggedOutUI();
 
       const data = await res.json().catch(() => ({}));
       const email = data?.user?.email;
       showLoggedInUI(email);
-    } catch {
+    } catch (err) {
+      console.error("Auth-Check-Fehler:", err);
       showLoggedOutUI();
+    } finally {
+      if (t) t.done();
     }
 
-    // Menü toggeln (Click + Enter)
     const toggleMenu = () => {
       const open = profileMenu.style.display === "block";
       profileMenu.style.display = open ? "none" : "block";
@@ -97,6 +107,7 @@
         profileMenu.setAttribute("aria-hidden", "true");
       }
     });
+
     document.addEventListener("keydown", (e) => {
       if (e.key === "Escape") {
         profileMenu.style.display = "none";
@@ -106,27 +117,28 @@
       }
     });
 
-    // Kontoeinstellungen
     const accountSettingsLink = document.getElementById("accountSettings");
     accountSettingsLink?.addEventListener("click", (e) => {
       e.preventDefault();
       window.location.href = "/profile.html";
     });
 
-    // Logout
     const logoutBtn = document.getElementById("logoutBtn");
     logoutBtn?.addEventListener("click", async () => {
+      let t;
       try {
-        const t = withTimeout(8000);
-        await fetch("/api/auth/logout", {
+        t = withTimeout(8000);
+        await secureFetch("/api/auth/logout", {
           method: "POST",
-          credentials: "include",
           signal: t.signal,
         });
-        t.done();
-      } catch {}
-      localStorage.clear();
-      window.location.href = "/login.html";
+      } catch (err) {
+        console.error("Logout-Fehler:", err);
+      } finally {
+        if (t) t.done();
+        localStorage.clear();
+        window.location.href = "/login.html";
+      }
     });
   });
 })();

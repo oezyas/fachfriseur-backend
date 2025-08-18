@@ -7,7 +7,11 @@ const User = require("../models/User");
 const logger = require("../logger");
 const sendEmail = require("../utils/sendEmail");
 
-const SECRET = process.env.JWT_SECRET || "dein_geheimer_schluessel";
+if (!process.env.JWT_SECRET) {
+  throw new Error("❌ JWT_SECRET ist nicht gesetzt! Bitte in .env konfigurieren.");
+}
+const SECRET = process.env.JWT_SECRET;
+
 const FRONTEND_BASE_URL = process.env.FRONTEND_BASE_URL || "https://localhost:3443";
 
 // Hilfsfunktion: Basis-URL aus Request ableiten

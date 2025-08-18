@@ -4,7 +4,7 @@ const LS_KEY = "productFilters.v1";
 
 const DEFAULTS = {
   metadataUrl: "/api/produkte/filters", // optionaler Endpoint: { brands:[], categories:[], productLines:[] }
-  brands: [""],          // Fallbacks, falls es keinen Endpoint gibt
+  brands: [""], // Fallbacks, falls es keinen Endpoint gibt
   categories: [""],
   productLines: ["", "Coloration", "feines Haar"],
   sortOptions: [
@@ -56,14 +56,17 @@ function createLabeledSelect({ id, label, options = [] }) {
 function loadState() {
   try {
     return JSON.parse(localStorage.getItem(LS_KEY)) || {};
-  } catch {
+  } catch (err) {
+    console.warn("Konnte gespeicherte Filter nicht laden (kaputtes JSON):", err)
     return {};
   }
 }
 function saveState(state) {
   try {
     localStorage.setItem(LS_KEY, JSON.stringify(state));
-  } catch {}
+  } catch (err) {
+    console.error("Fehler beim Speichern in localStorage:", err);
+  }
 }
 
 /** Apply state to selects */
@@ -98,38 +101,38 @@ export function onFiltersChange(cb) {
   document.addEventListener("filters:change", (e) => cb(e.detail));
 }
 
-/** Hauptfunktion */
+
 export async function createFilterBlock(opts = {}) {
   const cfg = { ...DEFAULTS, ...opts };
   const container = document.getElementById("filterPlaceholder");
   if (!container || container.__filterBlockInit) return;
   container.__filterBlockInit = true;
 
-  // Wrapper
+ 
   const wrapper = document.createElement("div");
   wrapper.className = "filter-bar";
   wrapper.setAttribute("role", "region");
   wrapper.setAttribute("aria-label", "Produktfilter");
 
-  // Datenquelle vorbereiten
+  
   let brands = cfg.brands;
   let categories = cfg.categories;
   let productLines = cfg.productLines;
 
-  // optional: Metadaten vom Server holen
+  
   try {
-    const res = await fetch(cfg.metadataUrl, { credentials: "include" });
+    const res = await secureFetch(cfg.metadataUrl, { method: "GET" });
     if (res.ok) {
       const data = await res.json();
       if (Array.isArray(data?.brands)) brands = ["", ...data.brands];
       if (Array.isArray(data?.categories)) categories = ["", ...data.categories];
       if (Array.isArray(data?.productLines)) productLines = ["", ...data.productLines];
     }
-  } catch {
-    // still okay: wir bleiben bei Defaults
-  }
+  } catch (err) {
+    console.error("Filter-Metadaten konnten nicht geladen werden:", err);
+}
 
-  // Selects erzeugen
+
   const brand = createLabeledSelect({
     id: "brandFilter",
     label: "Marke",
@@ -165,7 +168,6 @@ export async function createFilterBlock(opts = {}) {
 
   // State anwenden (localStorage + URL)
   const state = loadState();
-  // URL hat Vorrang, falls vorhanden
   const url = new URL(window.location.href);
   const overrides = {
     brandFilter: url.searchParams.get("brand") ?? undefined,
@@ -184,7 +186,7 @@ export async function createFilterBlock(opts = {}) {
     state: mergedState,
   });
 
-  // Change-Handler (debounced): speichert, setzt URL, feuert Event
+  // Change-Handler (debounced)
   const fire = debounce(() => {
     const filters = getCurrentFilters();
 
@@ -216,6 +218,6 @@ export async function createFilterBlock(opts = {}) {
     fire();
   });
 
-  // Beim Initialisieren einmal Event feuern, damit Listen sich laden
+  // Initial Event feuern
   fire();
 }

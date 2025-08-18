@@ -1,3 +1,7 @@
+// public/js/admin-login-check.js
+import { secureFetch } from "./utils/secureFetch.js";
+import { withTimeout } from "./utils/withTimeout.js";
+
 document.addEventListener("DOMContentLoaded", () => {
   const adminArea = document.getElementById("admin-area");
   const loginBox = document.getElementById("admin-login-box");
@@ -5,35 +9,43 @@ document.addEventListener("DOMContentLoaded", () => {
   const msg = document.getElementById("login-message");
   const btn = form?.querySelector("button[type=submit]");
 
-  const showLogin = () => { if (loginBox) loginBox.style.display = "block"; if (adminArea) adminArea.style.display = "none"; };
-  const showAdmin = () => { if (loginBox) loginBox.style.display = "none"; if (adminArea) adminArea.style.display = "block"; };
-
-  const withTimeout = (ms = 10000) => {
-    const ctrl = new AbortController();
-    const t = setTimeout(() => ctrl.abort(), ms);
-    return { signal: ctrl.signal, done: () => clearTimeout(t) };
+  const showLogin = () => {
+    if (adminArea) adminArea.style.display = "none";
+    if (loginBox) loginBox.style.display = "block";
   };
 
-  // 1) Admin-Check
+  const showAdmin = () => {
+    if (loginBox) loginBox.style.display = "none";
+    if (adminArea) adminArea.style.display = "block";
+  };
+
+  // --- Admin-Check beim Laden ---
   (async () => {
-    const t = withTimeout(8000);
+    let t;
     try {
-      const res = await fetch("/api/protected/admin-check", { credentials: "include", signal: t.signal });
+      t = withTimeout(8000);
+      const res = await secureFetch("/api/protected/admin-check", {
+        signal: t.signal,
+      });
+
       if (res.ok) {
         const data = await res.json().catch(() => ({}));
         if (data?.user?.role === "admin") return showAdmin();
       }
       showLogin();
     } catch (e) {
-      console.error("Fehler bei Admin-Check:", e);
+      console.error("❌ Fehler bei Admin-Check:", e);
       showLogin();
-    } finally { t.done(); }
+    } finally {
+      if (t) t.done();
+    }
   })();
 
-  // 2) Inline-Login
+  // --- Admin-Login-Formular ---
   if (form) {
     form.addEventListener("submit", async (e) => {
       e.preventDefault();
+
       const email = (document.getElementById("login-email")?.value || "").trim().toLowerCase();
       const password = document.getElementById("login-password")?.value || "";
 
@@ -42,15 +54,14 @@ document.addEventListener("DOMContentLoaded", () => {
         return;
       }
 
-      const t = withTimeout(10000);
+      let t;
       try {
+        t = withTimeout(10000);
         if (btn) btn.disabled = true;
         if (msg) { msg.textContent = "Anmeldung läuft…"; msg.style.color = "inherit"; }
 
-        const res = await fetch("/api/auth/login", {
+        const res = await secureFetch("/api/auth/login", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
-          credentials: "include",
           signal: t.signal,
           body: JSON.stringify({ email, password }),
         });
@@ -59,7 +70,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
         if (res.ok) {
           showAdmin();
-          if (msg) { msg.textContent = "Erfolgreich angemeldet."; msg.style.color = "green"; }
+          if (msg) { msg.textContent = "✅ Erfolgreich angemeldet."; msg.style.color = "green"; }
           setTimeout(() => window.location.reload(), 300);
         } else {
           const errMsg =
@@ -70,10 +81,10 @@ document.addEventListener("DOMContentLoaded", () => {
           if (msg) { msg.textContent = "❌ " + errMsg; msg.style.color = "red"; }
         }
       } catch (err) {
-        console.error(err);
+        console.error("❌ Admin-Login-Fehler:", err);
         if (msg) { msg.textContent = "❌ Netzwerk-/Serverfehler oder Timeout."; msg.style.color = "red"; }
       } finally {
-        t.done();
+        if (t) t.done();
         if (btn) btn.disabled = false;
       }
     });
