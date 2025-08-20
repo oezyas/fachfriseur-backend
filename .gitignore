@@ -1,5 +1,6 @@
 # Dependencies
 node_modules/
+.venv/
 
 # Environment & certs
 .env*
@@ -12,6 +13,7 @@ logs/
 npm-debug.log*
 yarn-debug.log*
 pnpm-debug.log*
+
 
 # Uploads (user-generated)
 public/uploads/*
@@ -30,3 +32,8 @@ public/uploads/*
 dist/
 build/
 .aider*
+
+audit_report_*/
+bandit_report.json
+secret_scan.json
+npm_audit.json

@@ -10,11 +10,14 @@
   <div class="form-container">
     <h2>Anmeldung</h2>
 
-    <form id="loginForm" autocomplete="on">
-      <input type="email" id="email" name="email" placeholder="E-Mail-Adresse" required autocomplete="email" />
-      <input type="password" id="password" name="password" placeholder="Passwort" required autocomplete="current-password" />
-      <button type="submit">Anmelden</button>
-    </form>
+<form id="loginForm"
+      action="/api/auth/login"
+      method="post"
+      autocomplete="on">
+  <input type="email"   id="email"    name="email"    required autocomplete="email" />
+  <input type="password" id="password" name="password" required autocomplete="current-password" />
+  <button type="submit">Anmelden</button>
+</form>
 
     <div id="message" class="message" aria-live="polite"></div>
 
@@ -24,7 +27,8 @@
     </div>
   </div>
 
-  <script src="/js/auth-ui.js" defer></script>
-  <script src="/js/login.js" defer></script>
+  <script type="module" src="/js/auth-ui.js"></script>
+  <script type="module" src="/js/login.js"></script>
+
 </body>
 </html>

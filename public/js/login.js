@@ -46,7 +46,11 @@ document.addEventListener("DOMContentLoaded", () => {
       if (res.ok) {
         showMsg("✅ Login erfolgreich! Weiterleitung…", "green");
         setTimeout(() => {
-          window.location.href = data.redirectUrl || "/index.html";
+          if (data.role === "admin") {
+            window.location.href = "/admin/produkte-verwalten.html";
+          } else {
+            window.location.href = "/index.html";
+          }
         }, 800);
       } else if (res.status === 423) {
         showMsg(data?.errors?.[0]?.msg || "❌ Account vorübergehend gesperrt.", "red");

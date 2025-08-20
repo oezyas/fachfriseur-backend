@@ -13,7 +13,7 @@ router.get("/", async (req, res) => {
   try {
     const user = await User.findById(req.user.id).select("email role").lean();
     if (!user) {
-      logger.warn(`Benutzer nicht gefunden: ${req.user.id}`);
+      logger.debug(`Benutzer nicht gefunden: ${req.user.id}`);
       return res.status(401).json({ errors: [{ msg: "Nicht authentifiziert." }] });
     }
     return res.status(200).json({

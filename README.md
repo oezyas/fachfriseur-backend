@@ -11,6 +11,3 @@ npm i
 cp .env.example .env
 npm run dev
 ``` # z.B. Leerzeile anhängen
-
-
-
