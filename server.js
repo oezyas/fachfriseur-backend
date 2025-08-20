@@ -1,4 +1,3 @@
-// server.js
 require("dotenv").config();
 
 const https = require("https");
@@ -11,9 +10,9 @@ const helmet = require("helmet");
 const morgan = require("morgan");
 const path = require("path");
 const mongoose = require("mongoose");
-
 const logger = require("./logger");
 const { errorHandler } = require("./utils/errorHandler");
+const { setCsrfCookie } = require("./utils/cookieManager");
 
 process.on("unhandledRejection", (e) => logger.error("UNHANDLED:", e));
 process.on("uncaughtException", (e) => logger.error("UNCAUGHT:", e));
@@ -21,35 +20,30 @@ process.on("uncaughtException", (e) => logger.error("UNCAUGHT:", e));
 const app = express();
 const isProd = process.env.NODE_ENV === "production";
 
-// Proxy/Hardening
 app.set("trust proxy", 1);
 app.disable("x-powered-by");
 
-// --- Core Middleware ---
 app.use(cookieParser());
 if (!isProd) app.use(morgan("dev"));
 app.use(express.json({ limit: "100kb" }));
 app.use(express.urlencoded({ extended: true, limit: "100kb" }));
 
 const csrf = require("csurf");
-const needsCrossSite = Boolean(process.env.FRONTEND_ORIGIN); 
-const sameSite = needsCrossSite ? "none" : "lax";
-const cookieIsSecure = isProd || sameSite === "none"; 
-
 const csrfProtection = csrf({ cookie: true });
+
+
+app.get("/api/csrf-token", csrfProtection, (req, res) => {
+  const token = req.csrfToken();
+  setCsrfCookie(res, token);
+  res.json({ csrfToken: token });
+});
+
+
 app.use((req, res, next) => {
   if (["GET", "HEAD", "OPTIONS"].includes(req.method)) return next();
   csrfProtection(req, res, next);
 });
 
-
-// CSRF-Token an den Client geben (und ein lesbares Hilfs-Cookie setzen)
-app.get("/api/csrf-token", (req, res) => {
-  const token = req.csrfToken();
-  res.json({ csrfToken: token });
-});
-
-// Helmet + CSP (connect-src dynamisch)
 const connectSrc = ["'self'"];
 if (process.env.FRONTEND_ORIGIN) {
   connectSrc.push(
@@ -76,23 +70,23 @@ app.use(
   })
 );
 
-// CORS (nur wenn externes Frontend)
+
 const FRONTEND_ORIGIN = process.env.FRONTEND_ORIGIN;
 if (FRONTEND_ORIGIN) {
   const origins = FRONTEND_ORIGIN.split(",").map((s) => s.trim());
   app.use(cors({ origin: origins, credentials: true }));
 }
 
-// --- Static Assets ---
+
 app.use(express.static(path.join(__dirname, "public")));
 app.use("/uploads", express.static(path.join(__dirname, "public", "uploads")));
 
-// Root
+
 app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "index.html"));
 });
 
-// --- DB ---
+
 const mongoUri = process.env.MONGO_URI;
 if (!mongoUri) {
   logger.error("Fehler: MONGO_URI ist nicht gesetzt in .env!");
@@ -106,12 +100,12 @@ mongoose
     process.exit(1);
   });
 
-// --- Routes ---
+
 const authRoutes = require("./routes/auth");
 const userRoutes = require("./routes/user");
 const productRoutes = require("./routes/product");
 const protectedRoutes = require("./routes/protected");
-const passwordResetRoutes = require("./routes/passwordReset"); // /request & /confirm
+const passwordResetRoutes = require("./routes/passwordReset");
 
 app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
@@ -119,19 +113,19 @@ app.use("/api/produkte", productRoutes);
 app.use("/api/protected", protectedRoutes);
 app.use("/api/password-reset", passwordResetRoutes);
 
-// ✅ Healthcheck
+
 app.get("/health", (req, res) => res.send("ok"));
 
-// 404
+
 app.use((req, res) => {
   logger.warn(`404 ${req.method} ${req.originalUrl}`);
   res.status(404).json({ errors: [{ msg: "Route nicht gefunden" }] });
 });
 
-// Zentraler Error-Handler (letzte Middleware)
+
 app.use(errorHandler);
 
-// --- Server (HTTPS mit Fallback auf HTTP) ---
+
 const PORT = process.env.PORT || 3443;
 const keyPath = process.env.TLS_KEY_PATH || "localhost-key.pem";
 const certPath = process.env.TLS_CERT_PATH || "localhost.pem";

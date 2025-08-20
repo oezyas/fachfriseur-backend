@@ -6,6 +6,8 @@ const { validationResult } = require("express-validator");
 const User = require("../models/User");
 const logger = require("../logger");
 const sendEmail = require("../utils/sendEmail");
+const { setAuthCookie, clearAuthCookie } = require("../utils/cookieManager");
+
 
 if (!process.env.JWT_SECRET) {
   throw new Error("❌ JWT_SECRET ist nicht gesetzt! Bitte in .env konfigurieren.");
@@ -30,7 +32,7 @@ exports.register = async (req, res) => {
 
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
-    logger.warn("❌ Ungültige Registrierungsdaten", errors.array());
+    logger.debug("❌ Ungültige Registrierungsdaten", errors.array());
     return res.status(400).json({ errors: errors.array() });
   }
 
@@ -39,7 +41,7 @@ exports.register = async (req, res) => {
   try {
     const existingUser = await User.findOne({ email: email.toLowerCase().trim() });
     if (existingUser) {
-      logger.warn(`❌ Registrierung abgelehnt – E-Mail existiert bereits: ${mask(email)}`);
+      logger.debug(`❌ Registrierung abgelehnt – E-Mail existiert bereits: ${mask(email)}`);
       return res.status(400).json({ errors: [{ msg: "E-Mail bereits registriert." }] });
     }
 
@@ -75,7 +77,7 @@ exports.login = async (req, res) => {
     const normEmail = email.toLowerCase().trim();
     const user = await User.findOne({ email: normEmail });
     if (!user) {
-      logger.warn(`❌ Login fehlgeschlagen – Benutzer nicht gefunden: ${mask(email)}`);
+      logger.debug(`❌ Login fehlgeschlagen – Benutzer nicht gefunden: ${mask(email)}`);
       return res.status(401).json({ errors: [{ msg: "E-Mail nicht gefunden." }] });
     }
 
@@ -86,7 +88,7 @@ exports.login = async (req, res) => {
     }
 
     if (user.lockUntil && user.lockUntil > Date.now()) {
-      logger.warn(`⏳ Account gesperrt: ${mask(email)} bis ${user.lockUntil.toISOString()}`);
+      logger.debug(`⏳ Account gesperrt: ${mask(email)} bis ${user.lockUntil.toISOString()}`);
       return res
         .status(423)
         .json({ errors: [{ msg: "Account vorübergehend gesperrt. Bitte später erneut versuchen." }] });
@@ -95,11 +97,11 @@ exports.login = async (req, res) => {
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
       user.failedLoginAttempts = (user.failedLoginAttempts || 0) + 1;
-      logger.warn(`❌ Falsches Passwort (${user.failedLoginAttempts}/5): ${mask(email)}`);
+      logger.debug(`❌ Falsches Passwort (${user.failedLoginAttempts}/5): ${mask(email)}`);
 
       if (user.failedLoginAttempts >= 5) {
         user.lockUntil = new Date(Date.now() + 15 * 60 * 1000);
-        logger.warn(`🔒 Account für 15 Minuten gesperrt: ${mask(email)}`);
+        logger.debug(`🔒 Account für 15 Minuten gesperrt: ${mask(email)}`);
       }
 
       await user.save();
@@ -112,22 +114,21 @@ exports.login = async (req, res) => {
 
     logger.info(`✅ Benutzer eingeloggt: ${mask(email)}`);
 
-    const redirectUrl = user.role === "admin" ? "/admin/produkte-verwalten.html" : "/";
     const token = jwt.sign({ id: user._id, role: user.role }, SECRET, { expiresIn: "1h" });
 
-    res.cookie("token", token, {
-      httpOnly: true,
-      secure: true,
-      sameSite: "strict",
-      path: "/",
-    });
+    setAuthCookie(res, token);
 
-    return res.status(200).json({ message: "Login erfolgreich.", redirectUrl });
+    // Nur Rolle zurückgeben, kein Redirect
+    return res.status(200).json({
+      message: "Login erfolgreich.",
+      role: user.role
+    });
   } catch (err) {
     logger.error("❌ Login fehlgeschlagen:", err);
-    res.status(500).json({ errors: [{ msg: "Serverfehler bei Login." }] });
+    return res.status(500).json({ errors: [{ msg: "Serverfehler bei Login." }] });
   }
 };
+
 
 // Logout
 exports.logout = (req, res) => {
@@ -136,12 +137,7 @@ exports.logout = (req, res) => {
   const { id, role } = req.user || {};
   logger.info(`🚪 Logout: userId=${id || "∅"} role=${role || "∅"}`);
 
-  res.clearCookie("token", {
-    httpOnly: true,
-    secure: true,
-    sameSite: "strict",
-    path: "/",
-  });
+  clearAuthCookie(res);
 
   res.status(200).json({ message: "Logout erfolgreich." });
 };
@@ -153,7 +149,7 @@ exports.passwordResetRequest = async (req, res, next) => {
 
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-      logger.warn("❌ Ungültige Passwort-Reset-Anfrage", { errors: errors.array() });
+      logger.debug("❌ Ungültige Passwort-Reset-Anfrage", { errors: errors.array() });
       return res.status(400).json({ errors: errors.array() });
     }
 
@@ -161,7 +157,7 @@ exports.passwordResetRequest = async (req, res, next) => {
     const user = await User.findOne({ email });
 
     if (!user) {
-      logger.warn(`🔎 Passwort-Reset: E-Mail nicht gefunden (generische Antwort gesendet) – ${mask(email)}`);
+      logger.debug(`🔎 Passwort-Reset: E-Mail nicht gefunden (generische Antwort gesendet) – ${mask(email)}`);
       return res.status(200).json({ msg: "Falls die E-Mail existiert, wurde ein Link versendet." });
     }
 
@@ -214,7 +210,7 @@ exports.passwordResetConfirm = async (req, res) => {
     });
 
     if (!user) {
-      logger.warn("❌ Ungültiger oder abgelaufener Token beim Passwort-Reset.");
+      logger.debug("❌ Ungültiger oder abgelaufener Token beim Passwort-Reset.");
       return res.status(400).json({ errors: [{ msg: "Ungültiger oder abgelaufener Token." }] });
     }
 
