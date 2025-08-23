@@ -42,3 +42,4 @@ logout-cookies.txt
 .env.backup
 *.bak
 *.backup
+.env
