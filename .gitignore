@@ -36,4 +36,9 @@ build/
 audit_report_*/
 bandit_report.json
 secret_scan.json
-npm_audit.json
+npm_audit.jsoncookies.txt
+login-cookies.txt
+logout-cookies.txt
+.env.backup
+*.bak
+*.backup
