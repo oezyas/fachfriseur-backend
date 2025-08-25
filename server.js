@@ -31,13 +31,11 @@ app.use(express.urlencoded({ extended: true, limit: "100kb" }));
 const csrf = require("csurf");
 const csrfProtection = csrf({ cookie: true });
 
-
 app.get("/api/csrf-token", csrfProtection, (req, res) => {
   const token = req.csrfToken();
   setCsrfCookie(res, token);
   res.json({ csrfToken: token });
 });
-
 
 app.use((req, res, next) => {
   if (["GET", "HEAD", "OPTIONS"].includes(req.method)) return next();
@@ -70,22 +68,18 @@ app.use(
   })
 );
 
-
 const FRONTEND_ORIGIN = process.env.FRONTEND_ORIGIN;
 if (FRONTEND_ORIGIN) {
   const origins = FRONTEND_ORIGIN.split(",").map((s) => s.trim());
   app.use(cors({ origin: origins, credentials: true }));
 }
 
-
 app.use(express.static(path.join(__dirname, "public")));
 app.use("/uploads", express.static(path.join(__dirname, "public", "uploads")));
-
 
 app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "index.html"));
 });
-
 
 const mongoUri = process.env.MONGO_URI;
 if (!mongoUri) {
@@ -100,7 +94,6 @@ mongoose
     process.exit(1);
   });
 
-
 const authRoutes = require("./routes/auth");
 const userRoutes = require("./routes/user");
 const productRoutes = require("./routes/product");
@@ -113,20 +106,16 @@ app.use("/api/produkte", productRoutes);
 app.use("/api/protected", protectedRoutes);
 app.use("/api/password-reset", passwordResetRoutes);
 
-
 app.get("/health", (req, res) => res.send("ok"));
-
 
 app.use((req, res) => {
   logger.warn(`404 ${req.method} ${req.originalUrl}`);
   res.status(404).json({ errors: [{ msg: "Route nicht gefunden" }] });
 });
 
-
 app.use(errorHandler);
 
-
-PORT = process.env.PORT || 3443;
+const PORT = process.env.PORT || 3443;
 const keyPath = process.env.TLS_KEY_PATH || "localhost-key.pem";
 const certPath = process.env.TLS_CERT_PATH || "localhost.pem";
 
@@ -136,11 +125,11 @@ try {
     cert: fs.readFileSync(certPath),
   };
   https.createServer(options, app).listen(PORT, () => {
-    logger.info(`HTTPS Server läuft auf Port ${PORT}`);
+    logger.info(`✅ HTTPS Server läuft auf Port ${PORT}`);
   });
 } catch (e) {
   logger.warn(`⚠️  Konnte HTTPS nicht starten (${e.message}). Fallback auf HTTP (nur DEV).`);
   http.createServer(app).listen(PORT, () => {
-    logger.info(`HTTP Server läuft auf Port ${PORT}`);
+    logger.info(`✅ HTTP Server läuft auf Port ${PORT}`);
   });
 }
