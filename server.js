@@ -14,7 +14,7 @@ const logger = require("./logger");
 const { errorHandler } = require("./utils/errorHandler");
 const { setCsrfCookie } = require("./utils/cookieManager");
 const csrfProtection = require("./middleware/csrf");
-const { authenticateToken, requireRole } = require("./middleware/authMiddleware");
+
 
 process.on("unhandledRejection", (e) => logger.error("UNHANDLED:", e));
 process.on("uncaughtException", (e) => logger.error("UNCAUGHT:", e));
@@ -28,7 +28,6 @@ app.disable("x-powered-by");
 app.use(cookieParser());
 app.use(express.json({ limit: "100kb" }));
 app.use(express.urlencoded({ extended: true, limit: "100kb" }));
-
 const connectSrc = ["'self'"];
 if (process.env.FRONTEND_ORIGIN) {
   connectSrc.push(
@@ -38,7 +37,6 @@ if (process.env.FRONTEND_ORIGIN) {
       .filter(Boolean)
   );
 }
-
 app.use(helmet());
 app.use(
   helmet.contentSecurityPolicy({
@@ -55,13 +53,11 @@ app.use(
     },
   })
 );
-
 const FRONTEND_ORIGIN = process.env.FRONTEND_ORIGIN;
 if (FRONTEND_ORIGIN) {
   const origins = FRONTEND_ORIGIN.split(",").map((s) => s.trim());
   app.use(cors({ origin: origins, credentials: true }));
 }
-
 app.use(
   expressWinston.logger({
     winstonInstance: logger,
@@ -83,19 +79,11 @@ app.use((req, res, next) => {
   csrfProtection(req, res, next);
 });
 
-// 🚨 Admin-Bereich absichern
-app.use(
-  "/admin",
-  authenticateToken,
-  requireRole("admin"),
-  (req, res, next) => {
-    // Wenn Admin-Check fehlschlägt, geht es gar nicht bis hier
-    next();
-  },
-  express.static(path.join(__dirname, "public/admin"))
-);
 
-// Öffentlicher Bereich
+
+
+
+
 app.use(express.static(path.join(__dirname, "public")));
 app.use("/uploads", express.static(path.join(__dirname, "public", "uploads")));
 
@@ -108,7 +96,6 @@ if (!mongoUri) {
   logger.error("Fehler: MONGO_URI ist nicht gesetzt in .env!");
   process.exit(1);
 }
-
 mongoose
   .connect(mongoUri)
   .then(() => logger.info("MongoDB connected"))
@@ -151,9 +138,7 @@ try {
     logger.info(`✅ HTTPS Server läuft auf Port ${PORT}`);
   });
 } catch (e) {
-  logger.warn(
-    `⚠️  Konnte HTTPS nicht starten (${e.message}). Fallback auf HTTP (nur DEV).`
-  );
+  logger.warn(`⚠️  Konnte HTTPS nicht starten (${e.message}). Fallback auf HTTP (nur DEV).`);
   http.createServer(app).listen(PORT, () => {
     logger.info(`✅ HTTP Server läuft auf Port ${PORT}`);
   });
