@@ -1,6 +1,7 @@
-// public/js/index.js
 import { secureFetch } from "./utils/secureFetch.js";
 import { withTimeout } from "./utils/withTimeout.js";
+import { createProductCard, renderPagination } from "./utils/renderUtils.js";
+import { showInfo, showError } from "./utils/ui.js";
 
 document.addEventListener("DOMContentLoaded", () => {
   console.log("Test erfolgreich");
@@ -49,100 +50,34 @@ document.addEventListener("DOMContentLoaded", () => {
       const produkte = Array.isArray(data) ? data : data.products || [];
       const totalCount = data.totalCount ?? produkte.length;
 
-      container.innerHTML = "";
+      container.textContent = "";
       if (produkte.length === 0) {
-        container.innerHTML = "<p>Keine Produkte gefunden.</p>";
-        if (paginationControls) paginationControls.innerHTML = "";
+        showInfo(container, "Keine Produkte gefunden.");
+        if (paginationControls) paginationControls.textContent = "";
         return;
       }
 
       produkte.forEach((p) => {
-        const priceNum = Number(p.price);
-        const priceTxt = Number.isFinite(priceNum) ? `${priceNum.toFixed(2)} €` : "";
-        const img = p.imageUrl ? `/uploads/${encodeURIComponent(p.imageUrl)}` : "/images/placeholder.png";
-        const name = p.name || "Produkt";
-
-        const card = document.createElement("div");
-        card.className = "produkt-karte";
-        card.innerHTML = `
-          <a href="/produkt.html?slug=${encodeURIComponent(p.slug || "")}">
-            <img src="${img}" alt="${name}" />
-            <h3>${name}</h3>
-            <p>${priceTxt}</p>
-          </a>
-        `;
+        const card = createProductCard(p);
         container.appendChild(card);
       });
 
       totalPages = Math.ceil(totalCount / limit);
-      renderPagination(currentPage, totalPages, filters);
+      if (paginationControls) {
+        renderPagination(paginationControls, totalPages, currentPage, (page) => {
+          currentPage = page;
+          ladeProdukte(filters);
+        });
+      }
     } catch (err) {
       console.error("❌", err);
-      container.innerHTML = "<p>❌ Produkte konnten nicht geladen werden.</p>";
-      if (paginationControls) paginationControls.innerHTML = "";
+      showError(container, "❌ Produkte konnten nicht geladen werden.");
+      if (paginationControls) paginationControls.textContent = "";
     } finally {
       if (t) t.done();
     }
   }
 
-  function renderPagination(current, total, filters) {
-    if (!paginationControls) return;
-    paginationControls.innerHTML = "";
-    if (total <= 1) return;
-
-    const btn = (page, label = page, active = false) => {
-      const b = document.createElement("button");
-      b.textContent = label;
-      b.className = active ? "active" : "";
-      b.disabled = active;
-      b.addEventListener("click", () => {
-        if (page !== currentPage) {
-          currentPage = page;
-          ladeProdukte(filters);
-        }
-      });
-      return b;
-    };
-
-    const prev = document.createElement("button");
-    prev.textContent = "‹";
-    prev.disabled = current === 1;
-    prev.addEventListener("click", () => {
-      if (currentPage > 1) {
-        currentPage--;
-        ladeProdukte(filters);
-      }
-    });
-    paginationControls.appendChild(prev);
-
-    let start = Math.max(1, current - 1);
-    let end = Math.min(total, current + 1);
-
-    if (start > 2) {
-      paginationControls.appendChild(btn(1));
-      paginationControls.appendChild(document.createTextNode(" ... "));
-    }
-    for (let i = start; i <= end; i++) {
-      paginationControls.appendChild(btn(i, i, i === current));
-    }
-    if (end < total - 1) {
-      paginationControls.appendChild(document.createTextNode(" ... "));
-      paginationControls.appendChild(btn(total));
-    }
-
-    const next = document.createElement("button");
-    next.textContent = "›";
-    next.disabled = current === total;
-    next.addEventListener("click", () => {
-      if (currentPage < totalPages) {
-        currentPage++;
-        ladeProdukte(filters);
-      }
-    });
-    paginationControls.appendChild(next);
-  }
-
-  // Filter-Events
   document.addEventListener("filters:change", (e) => {
     currentPage = 1;
     ladeProdukte(e.detail || getFilters());
@@ -153,6 +88,5 @@ document.addEventListener("DOMContentLoaded", () => {
     ladeProdukte(getFilters());
   });
 
-  // Initial
   ladeProdukte(getFilters());
 });

@@ -1,4 +1,5 @@
-// public/js/renderProductDetail.js
+import { setSanitizedHTML } from "./utils/renderUtils.js";
+
 export function renderProductDetail(product, container) {
   if (!product || !container) return;
 
@@ -18,12 +19,21 @@ export function renderProductDetail(product, container) {
   const img = document.createElement("img");
   img.src = imgSrc;
   img.alt = name;
+  img.loading = "lazy";
+  img.onerror = () => {
+    img.onerror = null;
+    img.src = "/images/placeholder.png";
+  };
 
   const h1 = document.createElement("h1");
   h1.textContent = name;
 
   const p = document.createElement("p");
-  p.textContent = desc;
+  if (typeof desc === "string" && desc.includes("<")) {
+    setSanitizedHTML(p, desc);
+  } else {
+    p.textContent = desc;
+  }
 
   const strong = document.createElement("strong");
   strong.textContent = priceText;

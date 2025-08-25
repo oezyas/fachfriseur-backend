@@ -1,50 +1,38 @@
-// public/js/register.js
 import { secureFetch } from "./utils/secureFetch.js";
 import { withTimeout } from "./utils/withTimeout.js";
+import { showError, showSuccess, showInfo, setButtonDisabled } from "./utils/ui.js";
 
 document.addEventListener("DOMContentLoaded", () => {
   const form = document.getElementById("registerForm");
   const message = document.getElementById("message");
   if (!form || !message) return;
 
-  const show = (txt, color = "inherit") => {
-    message.textContent = txt;
-    message.style.color = color;
-  };
+  const btn = form.querySelector('button[type="submit"]');
 
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
 
     const email = (document.getElementById("email")?.value || "").trim().toLowerCase();
-    const emailRepeat = (document.getElementById("emailRepeat")?.value || "").trim().toLowerCase();
     const password = document.getElementById("password")?.value || "";
     const passwordConfirm = document.getElementById("passwordConfirm")?.value || "";
     const username = (document.getElementById("username")?.value || "").trim();
-    const btn = form.querySelector('button[type="submit"]');
 
-    if (!email || !emailRepeat || !password || !passwordConfirm) {
-      return show("❌ Bitte fülle alle Felder aus.", "red");
+    if (!email || !password || !passwordConfirm) {
+      return showError(message, "❌ Bitte alle Pflichtfelder ausfüllen.");
     }
-    if (email !== emailRepeat) {
-      return show("❌ E-Mail-Adressen stimmen nicht überein.", "red");
-    }
+
     if (password !== passwordConfirm) {
-      return show("❌ Passwörter stimmen nicht überein.", "red");
+      return showError(message, "❌ Passwörter stimmen nicht überein.");
     }
-    if (
-      password.length < 12 ||
-      !/[A-Z]/.test(password) ||
-      !/[a-z]/.test(password) ||
-      !/\d/.test(password) ||
-      !/[^A-Za-z0-9]/.test(password)
-    ) {
-      return show("❌ Passwort: mind. 12 Zeichen, Groß-/Kleinbuchstabe, Zahl, Sonderzeichen.", "red");
+
+    if (password.length < 12) {
+      return showError(message, "❌ Passwort: mind. 12 Zeichen, Groß-/Kleinbuchstabe, Zahl, Sonderzeichen.");
     }
 
     let t;
     try {
-      btn && (btn.disabled = true);
-      show("📝 Registrierung läuft…");
+      setButtonDisabled(btn, true);
+      showInfo(message, "📝 Registrierung läuft…");
 
       const body = { email, password, passwordConfirm };
       if (username) body.username = username;
@@ -60,22 +48,25 @@ document.addEventListener("DOMContentLoaded", () => {
       const data = await res.json().catch(() => ({}));
 
       if (res.ok) {
-        show("✅ Registrierung erfolgreich! Weiterleitung…", "green");
-        form.reset();
-        setTimeout(() => (window.location.href = "login.html"), 800);
+        showSuccess(message, "✅ Registrierung erfolgreich. Du wirst weitergeleitet.");
+        setTimeout(() => {
+          window.location.href = "/login.html";
+        }, 1200);
       } else {
-        const html = Array.isArray(data.errors)
-          ? data.errors.map((e) => `<p>❌ ${e.msg}</p>`).join("")
-          : `<p>❌ ${data.message || "Fehler bei der Registrierung."}</p>`;
-        message.innerHTML = html;
-        message.style.color = "red";
+        if (Array.isArray(data.errors) && data.errors.length) {
+          const text = data.errors.map((e) => `❌ ${e.msg || String(e)}`).join("\n");
+          showError(message, text);
+          message.style.whiteSpace = "pre-wrap";
+        } else {
+          showError(message, `❌ ${data.message || "Fehler bei der Registrierung."}`);
+        }
       }
     } catch (err) {
       console.error("❌ Registrierungs-Fehler:", err);
-      show("❌ Netzwerk-/Serverfehler oder Timeout.", "red");
+      showError(message, "❌ Netzwerk-/Serverfehler oder Timeout.");
     } finally {
       if (t) t.done();
-      btn && (btn.disabled = false);
+      setButtonDisabled(btn, false);
     }
   });
 });

@@ -1,5 +1,4 @@
-// public/js/filterBlock.js
-
+import { secureFetch } from "./utils/secureFetch.js";
 const LS_KEY = "productFilters.v1";
 
 const DEFAULTS = {

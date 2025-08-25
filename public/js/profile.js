@@ -1,4 +1,3 @@
-// public/js/profile.js
 import { secureFetch } from "./utils/secureFetch.js";
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -21,19 +20,27 @@ document.addEventListener("DOMContentLoaded", () => {
       const role = user.role || "user";
       const displayName = user.username || (email ? email.split("@")[0] : "User");
 
-      // XSS-sicheres Rendering
       profilDiv.innerHTML = "";
-      const p1 = document.createElement("p");
-      const p2 = document.createElement("p");
-      const p3 = document.createElement("p");
 
-      p1.innerHTML = "<strong>Willkommen:</strong> ";
+      const p1 = document.createElement("p");
+      const strong1 = document.createElement("strong");
+      strong1.textContent = "Willkommen:";
+      p1.appendChild(strong1);
+      p1.append(" ");
       p1.append(document.createTextNode(displayName));
 
-      p2.innerHTML = "<strong>E-Mail:</strong> ";
+      const p2 = document.createElement("p");
+      const strong2 = document.createElement("strong");
+      strong2.textContent = "E-Mail:";
+      p2.appendChild(strong2);
+      p2.append(" ");
       p2.append(document.createTextNode(email));
 
-      p3.innerHTML = "<strong>Rolle:</strong> ";
+      const p3 = document.createElement("p");
+      const strong3 = document.createElement("strong");
+      strong3.textContent = "Rolle:";
+      p3.appendChild(strong3);
+      p3.append(" ");
       p3.append(document.createTextNode(role));
 
       profilDiv.append(p1, p2, p3);

@@ -1,6 +1,6 @@
-// public/js/logout.js
 import { secureFetch } from "./utils/secureFetch.js";
 import { withTimeout } from "./utils/withTimeout.js";
+import { setButtonDisabled } from "./utils/ui.js";
 
 document.addEventListener("DOMContentLoaded", () => {
   const btn = document.getElementById("logoutBtn");
@@ -11,8 +11,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if (btn.disabled) return;
 
     const originalText = btn.textContent;
-    btn.disabled = true;
-    btn.textContent = "Abmelden…";
+    setButtonDisabled(btn, true, "Abmelden…");
 
     let t;
     try {
@@ -24,8 +23,7 @@ document.addEventListener("DOMContentLoaded", () => {
       });
     } catch (err) {
       console.error("❌ Logout-Fehler:", err);
-      btn.disabled = false;
-      btn.textContent = originalText;
+      setButtonDisabled(btn, false);
       return;
     } finally {
       if (t) t.done();

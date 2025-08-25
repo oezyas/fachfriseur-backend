@@ -1,6 +1,6 @@
-// public/js/admin-login-check.js
 import { secureFetch } from "./utils/secureFetch.js";
 import { withTimeout } from "./utils/withTimeout.js";
+import { showMessage, showError, showSuccess, showInfo, setButtonDisabled } from "./utils/ui.js";
 
 document.addEventListener("DOMContentLoaded", () => {
   const adminArea = document.getElementById("admin-area");
@@ -19,7 +19,6 @@ document.addEventListener("DOMContentLoaded", () => {
     if (adminArea) adminArea.style.display = "block";
   };
 
-  // --- Admin-Check beim Laden ---
   (async () => {
     let t;
     try {
@@ -41,7 +40,6 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   })();
 
-  // --- Admin-Login-Formular ---
   if (form) {
     form.addEventListener("submit", async (e) => {
       e.preventDefault();
@@ -50,15 +48,15 @@ document.addEventListener("DOMContentLoaded", () => {
       const password = document.getElementById("login-password")?.value || "";
 
       if (!email || !password) {
-        if (msg) { msg.textContent = "E-Mail und Passwort erforderlich."; msg.style.color = "red"; }
+        showError(msg, "E-Mail und Passwort erforderlich.");
         return;
       }
 
       let t;
       try {
         t = withTimeout(10000);
-        if (btn) btn.disabled = true;
-        if (msg) { msg.textContent = "Anmeldung läuft…"; msg.style.color = "inherit"; }
+        setButtonDisabled(btn, true);
+        showInfo(msg, "Anmeldung läuft…");
 
         const res = await secureFetch("/api/auth/login", {
           method: "POST",
@@ -70,7 +68,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
         if (res.ok) {
           showAdmin();
-          if (msg) { msg.textContent = "✅ Erfolgreich angemeldet."; msg.style.color = "green"; }
+          showSuccess(msg, "✅ Erfolgreich angemeldet.");
           setTimeout(() => window.location.reload(), 300);
         } else {
           const errMsg =
@@ -78,14 +76,14 @@ document.addEventListener("DOMContentLoaded", () => {
             (res.status === 423 ? "Account vorübergehend gesperrt." :
              res.status === 401 ? "E-Mail/Passwort falsch." :
              "Anmeldung fehlgeschlagen.");
-          if (msg) { msg.textContent = "❌ " + errMsg; msg.style.color = "red"; }
+          showError(msg, "❌ " + errMsg);
         }
       } catch (err) {
         console.error("❌ Admin-Login-Fehler:", err);
-        if (msg) { msg.textContent = "❌ Netzwerk-/Serverfehler oder Timeout."; msg.style.color = "red"; }
+        showError(msg, "❌ Netzwerk-/Serverfehler oder Timeout.");
       } finally {
         if (t) t.done();
-        if (btn) btn.disabled = false;
+        setButtonDisabled(btn, false);
       }
     });
   }

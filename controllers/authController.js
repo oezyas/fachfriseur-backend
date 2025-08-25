@@ -26,7 +26,7 @@ const getBaseUrl = (req) => {
 // Helfer: E-Mail maskieren (PII-sparsam loggen)
 const mask = (e) => String(e || "").replace(/(.{3}).+(@.+)/, "$1***$2");
 
-// Registrierung
+// Registrierung 
 exports.register = async (req, res) => {
   res.setHeader("Content-Type", "application/json; charset=utf-8");
 
