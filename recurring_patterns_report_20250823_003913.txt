@@ -1,0 +1,134 @@
+Recurring patterns scan
+Project root: /Users/ozguryasar/Desktop/fachfriseur-backend
+Timestamp: 2025-08-23 00:39:13 +0200
+
+Scanning JS files for patterns...
+
+=== Wiederkehrende Patterns (nur >=2 Dateien) ===
+Pattern                                   Files Files list
+
+=== Pattern-Detail: Dateien pro Pattern (vollständige Liste) ===
+
+Running deeper duplicate-block scan (sliding window = 6 lines).
+This finds identical normalized 6-line snippets that appear in multiple files.
+
+== Block hash: 790ebc519e2845c2e84979a6971395bf14165c33  (in 2 files, 2 total occurrences) ==
+Files: public/js/auth-ui.js, public/js/logout.js
+
+Snippet:
+-----
+} finally {
+if (t) t.done();
+localStorage.clear();
+window.location.href = "/login.html";
+}
+});
+-----
+
+== Block hash: 8748e35985ab7cef3d1102105abe700672612569  (in 2 files, 2 total occurrences) ==
+Files: public/js/auth-ui.js, public/js/logout.js
+
+Snippet:
+-----
+if (t) t.done();
+localStorage.clear();
+window.location.href = "/login.html";
+}
+});
+});
+-----
+
+== Block hash: fdb91997d93e79c9512f1620e31ddf1b4f86fc3b  (in 2 files, 2 total occurrences) ==
+Files: public/js/reset-confirm.js, public/js/reset-request.js
+
+Snippet:
+-----
+const submitBtn = form.querySelector('button[type="submit"]');
+
+const show = (txt, color = "inherit") => {
+messageDiv.textContent = txt;
+messageDiv.style.color = color;
+};
+-----
+
+== Block hash: a072718e556b26fd0a144d6aea27587354024808  (in 2 files, 2 total occurrences) ==
+Files: public/js/reset-confirm.js, public/js/reset-request.js
+
+Snippet:
+-----
+
+const show = (txt, color = "inherit") => {
+messageDiv.textContent = txt;
+messageDiv.style.color = color;
+};
+
+-----
+
+== Block hash: 4dc3e31221220807e065632d9eb69290ac2c072e  (in 2 files, 2 total occurrences) ==
+Files: public/js/reset-confirm.js, public/js/reset-request.js
+
+Snippet:
+-----
+return;
+}
+
+let t;
+try {
+submitBtn && (submitBtn.disabled = true);
+-----
+
+== Block hash: bb773972738322b4c57c32540a4d9296deb6362d  (in 2 files, 2 total occurrences) ==
+Files: public/js/reset-confirm.js, public/js/reset-request.js
+
+Snippet:
+-----
+show("❌ Netzwerk-/Serverfehler oder Timeout.", "red");
+} finally {
+if (t) t.done();
+submitBtn && (submitBtn.disabled = false);
+}
+});
+-----
+
+== Block hash: 097a39562043ad930b12191cd3152d8c398c5108  (in 2 files, 2 total occurrences) ==
+Files: public/js/reset-confirm.js, public/js/reset-request.js
+
+Snippet:
+-----
+} finally {
+if (t) t.done();
+submitBtn && (submitBtn.disabled = false);
+}
+});
+});
+-----
+
+== Block hash: 45b10d497c4e63b33ba8891aa93269397fb30c3d  (in 2 files, 2 total occurrences) ==
+Files: public/js/admin-login-check.js, public/js/login.js
+
+Snippet:
+-----
+body: JSON.stringify({ email, password }),
+});
+
+const data = await res.json().catch(() => ({}));
+
+if (res.ok) {
+-----
+
+== Block hash: 777a3738b2e7cf227ca7c489a856b7a0b40bad1f  (in 2 files, 2 total occurrences) ==
+Files: public/js/login.js, public/js/register.js
+
+Snippet:
+-----
+message.style.color = color;
+};
+
+form.addEventListener("submit", async (e) => {
+e.preventDefault();
+
+-----
+
+
+Report generated: ./recurring_patterns_report_20250823_003913.txt
+JSON (placeholder): ./recurring_patterns_20250823_003913.json

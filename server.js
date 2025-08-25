@@ -126,7 +126,7 @@ app.use((req, res) => {
 app.use(errorHandler);
 
 
-const PORT = process.env.PORT || 3443;
+PORT = process.env.PORT || 3443;
 const keyPath = process.env.TLS_KEY_PATH || "localhost-key.pem";
 const certPath = process.env.TLS_CERT_PATH || "localhost.pem";
 

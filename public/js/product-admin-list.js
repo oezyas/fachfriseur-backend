@@ -1,5 +1,6 @@
 import { withTimeout } from "./utils/withTimeout.js";
-import { secureFetch } from "./utils/secureFetch.js";   // ✅ einheitlich nutzen
+import { secureFetch } from "./utils/secureFetch.js";
+import { setButtonDisabled, showInfo, showError } from "./utils/ui.js";
 
 document.addEventListener("DOMContentLoaded", () => {
   const container = document.getElementById("product-admin-list");
@@ -25,10 +26,11 @@ document.addEventListener("DOMContentLoaded", () => {
   async function loadProducts() {
     let t;
     try {
-      container.innerHTML = "🔄 Lädt…";
+      showInfo(container, "🔄 Lädt…");
       t = withTimeout(12000);
 
-      const res = await secureFetch("/api/produkte", { signal: t.signal });  // ✅
+     
+      const res = await secureFetch("/api/produkte", { signal: t.signal });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
 
       const payload = await res.json();
@@ -37,7 +39,7 @@ document.addEventListener("DOMContentLoaded", () => {
       renderFilteredList();
     } catch (err) {
       console.error("❌ Fehler beim Laden:", err);
-      container.innerHTML = "<p>❌ Fehler beim Laden der Produkte.</p>";
+      showError(container, "<p>❌ Fehler beim Laden der Produkte.</p>");
     } finally {
       if (t) t.done();
     }
@@ -51,14 +53,13 @@ document.addEventListener("DOMContentLoaded", () => {
         if (!confirm("❗ Produkt wirklich löschen?")) return;
 
         const originalText = btn.textContent;
-        btn.disabled = true;
-        btn.textContent = "Lösche…";
+        setButtonDisabled(btn, true, "Lösche…");
 
         let t;
         try {
           t = withTimeout(10000);
           const res = await secureFetch(`/api/produkte/${encodeURIComponent(id)}`, {
-            method: "DELETE",    // ✅ kein CSRF-Header mehr nötig
+            method: "DELETE",
             signal: t.signal,
           });
           if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -67,8 +68,7 @@ document.addEventListener("DOMContentLoaded", () => {
           renderFilteredList();
         } catch (err) {
           console.error("❌ Löschen fehlgeschlagen:", err);
-          btn.disabled = false;
-          btn.textContent = originalText;
+          setButtonDisabled(btn, false);
           alert("❌ Produkt konnte nicht gelöscht werden.");
         } finally {
           if (t) t.done();
@@ -85,6 +85,6 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   (async () => {
-    await loadProducts();  // ✅ fetchCsrfToken raus
+    await loadProducts();
   })();
 });

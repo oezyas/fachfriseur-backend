@@ -1,6 +1,5 @@
-// public/js/login.js
 import { secureFetch } from "./utils/secureFetch.js";
-import { withTimeout } from "./utils/withTimeout.js";
+import { showMessage, showError, showSuccess, showInfo, setButtonDisabled } from "./utils/ui.js";
 
 document.addEventListener("DOMContentLoaded", () => {
   const form = document.getElementById("loginForm");
@@ -11,12 +10,6 @@ document.addEventListener("DOMContentLoaded", () => {
   const message = document.getElementById("message");
   const submitBtn = form.querySelector('button[type="submit"]');
 
-  const showMsg = (text, color = "inherit") => {
-    if (!message) return;
-    message.textContent = text;
-    message.style.color = color;
-  };
-
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
 
@@ -24,27 +17,24 @@ document.addEventListener("DOMContentLoaded", () => {
     const password = passwordEl?.value || "";
 
     if (!email || !password) {
-      showMsg("❌ Bitte E-Mail und Passwort eingeben.", "red");
+      showError(message, "❌ Bitte E-Mail und Passwort eingeben.");
       return;
     }
 
-    let t;
     try {
-      submitBtn && (submitBtn.disabled = true);
-      showMsg("🔑 Anmeldung läuft…");
+      setButtonDisabled(submitBtn, true);
+      showInfo(message, "🔑 Anmeldung läuft…");
 
-      t = withTimeout(10000);
       const res = await secureFetch("/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        signal: t.signal,
         body: JSON.stringify({ email, password }),
       });
 
       const data = await res.json().catch(() => ({}));
 
       if (res.ok) {
-        showMsg("✅ Login erfolgreich! Weiterleitung…", "green");
+        showSuccess(message, "✅ Login erfolgreich! Weiterleitung…");
         setTimeout(() => {
           if (data.role === "admin") {
             window.location.href = "/admin/produkte-verwalten.html";
@@ -53,19 +43,17 @@ document.addEventListener("DOMContentLoaded", () => {
           }
         }, 800);
       } else if (res.status === 423) {
-        showMsg(data?.errors?.[0]?.msg || "❌ Account vorübergehend gesperrt.", "red");
+        showError(message, data?.errors?.[0]?.msg || "❌ Account vorübergehend gesperrt.");
       } else if (res.status === 401) {
-        showMsg(data?.errors?.[0]?.msg || "❌ E-Mail oder Passwort falsch.", "red");
+        showError(message, data?.errors?.[0]?.msg || "❌ E-Mail oder Passwort falsch.");
       } else {
-        showMsg(data?.errors?.[0]?.msg || "❌ Login fehlgeschlagen.", "red");
+        showError(message, data?.errors?.[0]?.msg || "❌ Login fehlgeschlagen.");
       }
     } catch (err) {
       console.error("❌ Login-Fehler:", err);
-      showMsg("❌ Netzwerk-/Serverfehler oder Timeout.", "red");
+      showError(message, "❌ Netzwerk-/Serverfehler oder Timeout.");
     } finally {
-      if (t) t.done();
-      submitBtn && (submitBtn.disabled = false);
+      setButtonDisabled(submitBtn, false);
     }
   });
 });
-

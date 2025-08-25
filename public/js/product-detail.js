@@ -1,7 +1,7 @@
-// public/js/product-detail.js
 import { withTimeout } from "./utils/withTimeout.js";
 import { secureFetch } from "./utils/secureFetch.js";
 import { renderProductDetail } from "./renderProductDetail.js";
+import { showError } from "./utils/ui.js";
 
 document.addEventListener("DOMContentLoaded", async () => {
   const container = document.getElementById("product-detail");
@@ -10,7 +10,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   const params = new URLSearchParams(window.location.search);
   const slug = params.get("slug");
   if (!slug) {
-    container.innerHTML = "<p>❌ Kein Produkt angegeben.</p>";
+    showError(container, "❌ Kein Produkt angegeben.");
     return;
   }
 
@@ -32,14 +32,12 @@ document.addEventListener("DOMContentLoaded", async () => {
       (payload._id ? payload : null);
 
     if (!product) {
-      container.innerHTML = "<p>❌ Produkt nicht gefunden.</p>";
+      showError(container, "❌ Produkt nicht gefunden.");
       return;
     }
 
-    // Render Detail-Komponente
     renderProductDetail(product, container);
 
-    // SEO optimieren
     document.title = product.seoTitle || product.name || "Produkt";
     const descText = product.seoDescription || String(product.description || "").slice(0, 160);
     let metaDesc = document.querySelector('meta[name="description"]');
@@ -51,7 +49,8 @@ document.addEventListener("DOMContentLoaded", async () => {
     metaDesc.setAttribute("content", descText);
   } catch (err) {
     console.error("❌ Fehler beim Laden:", err);
-    container.innerHTML = `<p>❌ Fehler beim Laden des Produkts (${err.message}).</p>`;
+    const safeMsg = String(err?.message || "Fehler").slice(0, 200);
+    showError(container, `❌ Fehler beim Laden des Produkts (${safeMsg}).`);
   } finally {
     if (t) t.done();
   }

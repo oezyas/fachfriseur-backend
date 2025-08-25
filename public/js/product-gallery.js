@@ -1,6 +1,7 @@
-// public/js/product-gallery.js
 import { secureFetch } from "./utils/secureFetch.js";
 import { withTimeout } from "./utils/withTimeout.js";
+import { createProductCard, renderSelectOptions } from "./utils/renderUtils.js";
+import { showInfo, showError } from "./utils/ui.js";
 
 document.addEventListener("DOMContentLoaded", async () => {
   const gallery = document.getElementById("produkte-galerie");
@@ -13,41 +14,22 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   let allProducts = [];
 
-  const esc = (s) =>
-    String(s ?? "").replace(/[&<>"']/g, (c) => (
-      { "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[c]
-    ));
-
   const fmtPrice = (v) => {
     const n = Number(v);
     return Number.isFinite(n) ? `${n.toFixed(2)} €` : "";
   };
 
   function renderGallery(products) {
-    gallery.innerHTML = "";
+    gallery.textContent = "";
     if (!products.length) {
-      gallery.innerHTML = "<p>Keine Produkte gefunden.</p>";
+      showInfo(gallery, "Keine Produkte gefunden.");
       return;
     }
 
     const frag = document.createDocumentFragment();
     products.forEach((p) => {
-      if (p.status !== "active") return; 
-
-      const card = document.createElement("div");
-      card.className = "produkt-karte";
-
-      const imgSrc = p.imageUrl ? `/uploads/${encodeURIComponent(p.imageUrl)}` : "/images/placeholder.png";
-      const slug = esc(p.slug || "");
-      const name = esc(p.name || "Produkt");
-
-      card.innerHTML = `
-        <a href="/produkt.html?slug=${slug}" class="product-link">
-          <img src="${imgSrc}" alt="${name}" />
-          <h3>${name}</h3>
-          <p>${fmtPrice(p.price)}</p>
-        </a>
-      `;
+      if (p.status !== "active") return;
+      const card = createProductCard(p);
       frag.appendChild(card);
     });
 
@@ -86,25 +68,10 @@ document.addEventListener("DOMContentLoaded", async () => {
     renderGallery(filtered);
   }
 
-  function fillSelect(selectEl, items, placeholderText) {
-    if (!selectEl) return;
-    selectEl.innerHTML = "";
-    const opt = document.createElement("option");
-    opt.value = "";
-    opt.textContent = placeholderText;
-    selectEl.appendChild(opt);
-    [...new Set(items.filter(Boolean))].sort().forEach((val) => {
-      const o = document.createElement("option");
-      o.value = val;
-      o.textContent = val;
-      selectEl.appendChild(o);
-    });
-  }
-
   // --- Produkte laden ---
   let t;
   try {
-    gallery.innerHTML = "🔄 Produkte werden geladen…";
+    showInfo(gallery, "🔄 Produkte werden geladen…");
     t = withTimeout(12000);
 
     const res = await secureFetch("/api/produkte", { signal: t.signal });
@@ -113,14 +80,14 @@ document.addEventListener("DOMContentLoaded", async () => {
     allProducts = Array.isArray(payload) ? payload : (payload.products || []);
     if (!Array.isArray(allProducts)) allProducts = [];
 
-    fillSelect(categoryFilter, allProducts.map((p) => p.category), "Alle Kategorien");
-    fillSelect(productLineFilter, allProducts.map((p) => p.productLine), "Alle Produktlinien");
-    fillSelect(brandFilter, allProducts.map((p) => p.brand), "Alle Marken");
+    renderSelectOptions(categoryFilter, allProducts.map((p) => p.category), "Alle Kategorien");
+    renderSelectOptions(productLineFilter, allProducts.map((p) => p.productLine), "Alle Produktlinien");
+    renderSelectOptions(brandFilter, allProducts.map((p) => p.brand), "Alle Marken");
 
     applyFiltersAndSort();
   } catch (err) {
     console.error("❌ Fehler beim Laden der Produkte:", err);
-    gallery.innerHTML = "<p>❌ Produkte konnten nicht geladen werden.</p>";
+    showError(gallery, "❌ Produkte konnten nicht geladen werden.");
   } finally {
     if (t) t.done();
   }

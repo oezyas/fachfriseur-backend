@@ -1,6 +1,7 @@
 // public/js/reset-confirm.js
 import { secureFetch } from "./utils/secureFetch.js";
 import { withTimeout } from "./utils/withTimeout.js";
+import {  showMessage, showError, showSuccess, showInfo , setButtonDisabled } from "./utils/ui.js";
 
 document.addEventListener("DOMContentLoaded", () => {
   const form = document.getElementById("resetConfirmForm");
@@ -11,16 +12,13 @@ document.addEventListener("DOMContentLoaded", () => {
   const confirmEl = document.getElementById("confirmPassword");
   const submitBtn = form.querySelector('button[type="submit"]');
 
-  const show = (txt, color = "inherit") => {
-    messageDiv.textContent = txt;
-    messageDiv.style.color = color;
-  };
+  // KEIN lokales show() mehr!
 
   // Token aus URL holen
   const params = new URLSearchParams(window.location.search);
   const token = params.get("token");
   if (!token) {
-    show("❌ Ungültiger oder fehlender Reset-Link.", "red");
+    showError(messageDiv, "❌ Ungültiger oder fehlender Reset-Link.");
     return;
   }
 
@@ -31,18 +29,18 @@ document.addEventListener("DOMContentLoaded", () => {
     const pw2 = confirmEl?.value || "";
 
     if (pw.length < 8) {
-      show("❌ Passwort muss mindestens 8 Zeichen lang sein.", "red");
+      showError(messageDiv, "❌ Passwort muss mindestens 8 Zeichen lang sein.");
       return;
     }
     if (pw !== pw2) {
-      show("❌ Passwörter stimmen nicht überein.", "red");
+      showError(messageDiv, "❌ Passwörter stimmen nicht überein.");
       return;
     }
 
     let t;
     try {
-      submitBtn && (submitBtn.disabled = true);
-      show("Sende neues Passwort…");
+      setButtonDisabled(submitBtn, true);
+      showInfo(messageDiv, "Sende neues Passwort…");
 
       t = withTimeout(10000);
 
@@ -56,17 +54,17 @@ document.addEventListener("DOMContentLoaded", () => {
       const data = await res.json().catch(() => ({}));
 
       if (res.ok) {
-        show("✅ Passwort erfolgreich geändert. Bitte einloggen.", "green");
+        showSuccess(messageDiv, "✅ Passwort erfolgreich geändert. Bitte einloggen.");
         setTimeout(() => (window.location.href = "login.html"), 1500);
       } else {
-        show(data?.errors?.[0]?.msg || "❌ Fehler beim Zurücksetzen.", "red");
+        showError(messageDiv, data?.errors?.[0]?.msg || "❌ Fehler beim Zurücksetzen.");
       }
     } catch (err) {
       console.error("❌ Fehler beim Passwort-Reset-Confirm:", err);
-      show("❌ Netzwerk-/Serverfehler oder Timeout.", "red");
+      showError(messageDiv, "❌ Netzwerk-/Serverfehler oder Timeout.");
     } finally {
       if (t) t.done();
-      submitBtn && (submitBtn.disabled = false);
+      setButtonDisabled(submitBtn, false);
     }
   });
 });
