@@ -7,12 +7,14 @@ const express = require("express");
 const cookieParser = require("cookie-parser");
 const cors = require("cors");
 const helmet = require("helmet");
-const morgan = require("morgan");
+const expressWinston = require("express-winston");
 const path = require("path");
 const mongoose = require("mongoose");
 const logger = require("./logger");
 const { errorHandler } = require("./utils/errorHandler");
 const { setCsrfCookie } = require("./utils/cookieManager");
+const csrfProtection = require("./middleware/csrf");
+
 
 process.on("unhandledRejection", (e) => logger.error("UNHANDLED:", e));
 process.on("uncaughtException", (e) => logger.error("UNCAUGHT:", e));
@@ -24,24 +26,8 @@ app.set("trust proxy", 1);
 app.disable("x-powered-by");
 
 app.use(cookieParser());
-if (!isProd) app.use(morgan("dev"));
 app.use(express.json({ limit: "100kb" }));
 app.use(express.urlencoded({ extended: true, limit: "100kb" }));
-
-const csrf = require("csurf");
-const csrfProtection = csrf({ cookie: true });
-
-app.get("/api/csrf-token", csrfProtection, (req, res) => {
-  const token = req.csrfToken();
-  setCsrfCookie(res, token);
-  res.json({ csrfToken: token });
-});
-
-app.use((req, res, next) => {
-  if (["GET", "HEAD", "OPTIONS"].includes(req.method)) return next();
-  csrfProtection(req, res, next);
-});
-
 const connectSrc = ["'self'"];
 if (process.env.FRONTEND_ORIGIN) {
   connectSrc.push(
@@ -67,12 +53,36 @@ app.use(
     },
   })
 );
-
 const FRONTEND_ORIGIN = process.env.FRONTEND_ORIGIN;
 if (FRONTEND_ORIGIN) {
   const origins = FRONTEND_ORIGIN.split(",").map((s) => s.trim());
   app.use(cors({ origin: origins, credentials: true }));
 }
+app.use(
+  expressWinston.logger({
+    winstonInstance: logger,
+    meta: true,
+    msg: "HTTP {{req.method}} {{req.url}} {{res.statusCode}} {{res.responseTime}}ms",
+    colorize: false,
+    ignoreRoute: () => false,
+  })
+);
+
+app.get("/api/csrf-token", csrfProtection, (req, res) => {
+  const token = req.csrfToken();
+  setCsrfCookie(res, token);
+  res.json({ csrfToken: token });
+});
+
+app.use((req, res, next) => {
+  if (["GET", "HEAD", "OPTIONS"].includes(req.method)) return next();
+  csrfProtection(req, res, next);
+});
+
+
+
+
+
 
 app.use(express.static(path.join(__dirname, "public")));
 app.use("/uploads", express.static(path.join(__dirname, "public", "uploads")));
